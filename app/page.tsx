@@ -353,7 +353,7 @@ export default function Home() {
       {/* Header */}
       <header className="text-center mb-6">
         <h1 className="text-3xl md:text-4xl font-bold">
-          <span className="text-accent">Wheel</span> of Fortune
+          <span className="text-accent">Wheel</span> of Ethereal
         </h1>
 
         {/* Mode Selector */}
