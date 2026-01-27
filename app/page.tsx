@@ -469,7 +469,7 @@ export default function Home() {
             spinning={spinning}
             onSpinStart={handleSpinStart}
             disabled={!canSpin}
-            size={380}
+            size={480}
           />
 
           {/* Autospin Toggle */}

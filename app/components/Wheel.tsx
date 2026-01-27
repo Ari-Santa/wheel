@@ -75,7 +75,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       ctx.translate(textX, textY);
       ctx.rotate(textAngle + Math.PI / 2);
       ctx.fillStyle = "#ffffff";
-      ctx.font = `bold ${Math.max(11, Math.min(14, size / 28))}px sans-serif`;
+      ctx.font = `bold ${Math.max(13, Math.min(18, size / 24))}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0,0,0,0.7)";
