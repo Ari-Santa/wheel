@@ -14,6 +14,9 @@ interface WheelProps {
   onSpinStart: () => void;
   disabled: boolean;
   size?: number;
+  autoSpinEnabled?: boolean;
+  onAutoSpinChange?: (enabled: boolean) => void;
+  showAutoSpin?: boolean;
 }
 
 export interface WheelRef {
@@ -27,6 +30,9 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   onSpinStart,
   disabled,
   size = 380,
+  autoSpinEnabled = false,
+  onAutoSpinChange,
+  showAutoSpin = false,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [rotation, setRotation] = useState(0);
@@ -75,7 +81,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       ctx.translate(textX, textY);
       ctx.rotate(textAngle + Math.PI / 2);
       ctx.fillStyle = "#ffffff";
-      ctx.font = `bold ${Math.max(13, Math.min(18, size / 24))}px sans-serif`;
+      ctx.font = `bold ${Math.max(16, Math.min(26, size / 20))}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0,0,0,0.7)";
@@ -83,12 +89,13 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 
       // Word wrap for long labels
       const words = segment.label.split(" ");
+      const lineSpacing = Math.max(10, size / 50); // Dynamic line spacing
       if (words.length > 1 && segment.label.length > 10) {
         const mid = Math.ceil(words.length / 2);
         const line1 = words.slice(0, mid).join(" ");
         const line2 = words.slice(mid).join(" ");
-        ctx.fillText(line1, 0, -8);
-        ctx.fillText(line2, 0, 8);
+        ctx.fillText(line1, 0, -lineSpacing);
+        ctx.fillText(line2, 0, lineSpacing);
       } else {
         ctx.fillText(segment.label, 0, 0);
       }
@@ -150,7 +157,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   }), [spin]);
 
   return (
-    <div className="flex flex-col items-center gap-6">
+    <div className="flex flex-col items-center gap-4">
       <div className="wheel-container" style={{ width: size, height: size }}>
         <div className="wheel-pointer" />
         <div
@@ -171,21 +178,37 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
         </div>
       </div>
 
-      <button
-        onClick={spin}
-        disabled={disabled || spinning}
-        className={`
-          px-10 py-4 rounded-xl text-lg font-bold uppercase tracking-wider
-          transition-all duration-200
-          ${
-            disabled || spinning
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-accent hover:bg-accent-hover text-white shadow-lg hover:shadow-accent/30 hover:scale-105 active:scale-95"
-          }
-        `}
-      >
-        {spinning ? "Spinning..." : "Spin Wheel"}
-      </button>
+      <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+        <button
+          onClick={spin}
+          disabled={disabled || spinning}
+          className={`
+            px-10 py-4 rounded-xl text-lg font-bold uppercase tracking-wider
+            transition-all duration-200
+            ${
+              disabled || spinning
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-accent hover:bg-accent-hover text-white shadow-lg hover:shadow-accent/30 hover:scale-105 active:scale-95"
+            }
+          `}
+        >
+          {spinning ? "Spinning..." : "Spin Wheel"}
+        </button>
+
+        {showAutoSpin && onAutoSpinChange && (
+          <label className="flex items-center gap-2 px-4 py-3 bg-surface rounded-lg cursor-pointer hover:bg-surface-light transition-colors">
+            <input
+              type="checkbox"
+              checked={autoSpinEnabled}
+              onChange={(e) => onAutoSpinChange(e.target.checked)}
+              className="cursor-pointer accent-accent w-4 h-4"
+            />
+            <span className="text-sm font-medium text-text-muted whitespace-nowrap">
+              Auto-spin (2s)
+            </span>
+          </label>
+        )}
+      </div>
     </div>
   );
 });

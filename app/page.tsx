@@ -71,6 +71,16 @@ export default function Home() {
     };
   }, []);
 
+  // Auto-dismiss result overlay after 5 seconds
+  useEffect(() => {
+    if (lastResult && !spinning) {
+      const timer = setTimeout(() => {
+        setLastResult(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [lastResult, spinning]);
+
   const addPlayer = useCallback(
     (name: string) => {
       if (mode === "battle-royale" && players.length >= 64) return;
@@ -349,48 +359,35 @@ export default function Home() {
       : null;
 
   return (
-    <main className="min-h-screen bg-background p-4 md:p-6">
-      {/* Header */}
-      <header className="text-center mb-6">
-        <h1 className="text-3xl md:text-4xl font-bold">
-          <span className="text-accent">Wheel</span> of Ethereal
-        </h1>
-
-        {/* Mode Selector */}
-        {phase === "setup" && (
-          <div className="flex justify-center gap-3 mt-4">
-            <button
-              onClick={() => {
-                setMode("normal");
-                setPlayers([]);
-              }}
-              className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
-                mode === "normal"
-                  ? "bg-accent text-white"
-                  : "bg-surface text-text-muted hover:bg-surface-light"
-              }`}
-            >
-              Normal Mode
-            </button>
-            <button
-              onClick={() => {
-                setMode("battle-royale");
-                setPlayers([]);
-              }}
-              className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
-                mode === "battle-royale"
-                  ? "bg-accent text-white"
-                  : "bg-surface text-text-muted hover:bg-surface-light"
-              }`}
-            >
-              Battle Royale
-            </button>
+    <>
+      {/* Battle Result Overlay - Fixed at top */}
+      {lastResult && !spinning && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
+          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md mx-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <div className="text-sm font-bold text-accent mb-1 uppercase tracking-wide">
+                  {lastResult.segment}
+                </div>
+                <p className="text-base font-medium text-white">
+                  {lastResult.detail}
+                </p>
+              </div>
+              <button
+                onClick={() => setLastResult(null)}
+                className="text-text-muted hover:text-white transition-colors shrink-0 text-xl leading-none"
+                aria-label="Dismiss"
+              >
+                ×
+              </button>
+            </div>
           </div>
-        )}
-      </header>
+        </div>
+      )}
 
+      <main className="min-h-screen bg-background py-4 px-1">
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-2">
         {/* Left Panel: Players */}
         <div className="lg:w-72 shrink-0">
           <PlayerList
@@ -434,11 +431,50 @@ export default function Home() {
 
         {/* Center: Wheel */}
         <div className="flex-1 flex flex-col items-center">
+          {/* Header */}
+          <header className="text-center mb-3 w-full">
+            <h1 className="text-3xl md:text-4xl font-bold">
+              <span className="text-accent">Wheel</span> of Ethereal
+            </h1>
+
+            {/* Mode Selector */}
+            {phase === "setup" && (
+              <div className="flex justify-center gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    setMode("normal");
+                    setPlayers([]);
+                  }}
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
+                    mode === "normal"
+                      ? "bg-accent text-white"
+                      : "bg-surface text-text-muted hover:bg-surface-light"
+                  }`}
+                >
+                  Normal Mode
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("battle-royale");
+                    setPlayers([]);
+                  }}
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
+                    mode === "battle-royale"
+                      ? "bg-accent text-white"
+                      : "bg-surface text-text-muted hover:bg-surface-light"
+                  }`}
+                >
+                  Battle Royale
+                </button>
+              </div>
+            )}
+          </header>
+
           {/* Current Player Banner */}
           {phase === "playing" && currentPlayerName && (
-            <div className="mb-4 bg-surface rounded-xl px-6 py-3 text-center fade-in">
-              <span className="text-text-muted text-sm">Current Player</span>
-              <p className="text-xl font-bold text-accent">{currentPlayerName}</p>
+            <div className="mb-2 bg-surface rounded-xl px-5 py-2 text-center fade-in">
+              <span className="text-text-muted text-xs">Current Player</span>
+              <p className="text-lg font-bold text-accent">{currentPlayerName}</p>
               {mode === "battle-royale" && (
                 <span className="text-text-muted text-xs">
                   Round {round} &middot; {activePlayers.length} remaining
@@ -448,7 +484,7 @@ export default function Home() {
           )}
 
           {phase === "finished" && (
-            <div className="mb-4 bg-accent/20 border border-accent rounded-xl px-8 py-4 text-center fade-in">
+            <div className="mb-2 bg-accent/20 border border-accent rounded-xl px-8 py-4 text-center fade-in">
               <p className="text-2xl font-bold text-accent">Game Over!</p>
               {players.find((p) => p.status === "winner") && (
                 <p className="text-lg mt-1">
@@ -469,38 +505,18 @@ export default function Home() {
             spinning={spinning}
             onSpinStart={handleSpinStart}
             disabled={!canSpin}
-            size={480}
+            size={600}
+            autoSpinEnabled={autoSpinEnabled}
+            onAutoSpinChange={(enabled) => {
+              setAutoSpinEnabled(enabled);
+              if (!enabled && autoSpinTimerRef.current) {
+                clearTimeout(autoSpinTimerRef.current);
+                autoSpinTimerRef.current = null;
+              }
+            }}
+            showAutoSpin={phase === "playing"}
           />
 
-          {/* Autospin Toggle */}
-          {phase === "playing" && (
-            <div className="mt-4 flex items-center justify-center gap-3 bg-surface rounded-lg px-4 py-3">
-              <input
-                type="checkbox"
-                id="autospin-toggle"
-                checked={autoSpinEnabled}
-                onChange={(e) => {
-                  setAutoSpinEnabled(e.target.checked);
-                  if (!e.target.checked && autoSpinTimerRef.current) {
-                    clearTimeout(autoSpinTimerRef.current);
-                    autoSpinTimerRef.current = null;
-                  }
-                }}
-                className="cursor-pointer accent-accent"
-              />
-              <label htmlFor="autospin-toggle" className="text-sm font-medium cursor-pointer">
-                Autospin (2s delay)
-              </label>
-            </div>
-          )}
-
-          {/* Last Result */}
-          {lastResult && !spinning && (
-            <div className="mt-6 bg-surface rounded-xl px-6 py-4 text-center max-w-md fade-in">
-              <div className="text-sm text-text-muted mb-1">{lastResult.segment}</div>
-              <p className="text-base font-medium">{lastResult.detail}</p>
-            </div>
-          )}
         </div>
 
         {/* Right Panel: Results Log */}
@@ -560,5 +576,6 @@ export default function Home() {
         </div>
       </div>
     </main>
+    </>
   );
 }
