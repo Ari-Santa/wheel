@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
 import BattleRoyaleResults from "./components/BattleRoyaleResults";
+import SplashScreen from "./components/SplashScreen";
 
 type GameMode = "normal" | "battle-royale";
 type GamePhase = "setup" | "playing" | "finished";
@@ -164,6 +165,7 @@ export default function Home() {
   const [round, setRound] = useState(1);
   const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
+  const [showSplash, setShowSplash] = useState(true);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
   const wheelSize = useResponsiveWheelSize();
@@ -550,6 +552,9 @@ export default function Home() {
 
   return (
     <>
+      {/* Splash Screen */}
+      {showSplash && <SplashScreen onDismiss={() => setShowSplash(false)} />}
+
       {/* Battle Result Overlay - Fixed at top */}
       {lastResult && !spinning && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
@@ -580,6 +585,43 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
         {/* Left Panel: Players */}
         <div className="lg:w-72 xl:w-80 2xl:w-96 shrink-0">
+          {/* Mode Selector - Only during setup */}
+          {phase === "setup" && (
+            <div className="bg-surface rounded-xl p-3 mb-4">
+              <h3 className="text-sm font-semibold text-text-muted mb-2 uppercase tracking-wide">
+                Game Mode
+              </h3>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    setMode("normal");
+                    setPlayers([]);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                    mode === "normal"
+                      ? "bg-accent text-white"
+                      : "bg-surface-light text-text-muted hover:bg-surface-light/70"
+                  }`}
+                >
+                  Normal Mode
+                </button>
+                <button
+                  onClick={() => {
+                    setMode("battle-royale");
+                    setPlayers([]);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                    mode === "battle-royale"
+                      ? "bg-accent text-white"
+                      : "bg-surface-light text-text-muted hover:bg-surface-light/70"
+                  }`}
+                >
+                  Battle Royale
+                </button>
+              </div>
+            </div>
+          )}
+
           <PlayerList
             players={players}
             currentPlayerIndex={currentPlayerIndex}
@@ -621,45 +663,6 @@ export default function Home() {
 
         {/* Center: Wheel */}
         <div className="flex-1 flex flex-col items-center">
-          {/* Header */}
-          <header className="text-center mb-3 w-full">
-            <h1 className="text-3xl md:text-4xl xl:text-5xl 2xl:text-6xl font-bold">
-              <span className="text-accent">Wheel</span> of Ethereal
-            </h1>
-
-            {/* Mode Selector */}
-            {phase === "setup" && (
-              <div className="flex justify-center gap-3 mt-4">
-                <button
-                  onClick={() => {
-                    setMode("normal");
-                    setPlayers([]);
-                  }}
-                  className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    mode === "normal"
-                      ? "bg-accent text-white"
-                      : "bg-surface text-text-muted hover:bg-surface-light"
-                  }`}
-                >
-                  Normal Mode
-                </button>
-                <button
-                  onClick={() => {
-                    setMode("battle-royale");
-                    setPlayers([]);
-                  }}
-                  className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    mode === "battle-royale"
-                      ? "bg-accent text-white"
-                      : "bg-surface text-text-muted hover:bg-surface-light"
-                  }`}
-                >
-                  Battle Royale
-                </button>
-              </div>
-            )}
-          </header>
-
           {/* Current Player Banner */}
           {phase === "playing" && currentPlayerName && (
             <div className="mb-2 bg-surface rounded-xl px-5 py-2 text-center fade-in">

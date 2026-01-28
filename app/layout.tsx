@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Spinning Wheel of Fortune",
-  description: "A wheel of fortune game with Normal and Battle Royale modes",
+  title: "Wheel of Ethereal",
+  description: "Interactive spinning wheel game with Battle Royale mode",
 };
 
 export default function RootLayout({
