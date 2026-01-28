@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
+import BattleRoyaleResults from "./components/BattleRoyaleResults";
 
 type GameMode = "normal" | "battle-royale";
 type GamePhase = "setup" | "playing" | "finished";
@@ -11,6 +12,17 @@ interface GameResult {
   playerName: string;
   segment: string;
   detail: string;
+}
+
+export interface BattleRoyaleRanking {
+  playerId: string;
+  playerName: string;
+  rank: number;  // 1 = winner, 2 = 2nd place, 3 = 3rd place
+  eliminationCause?: string;
+  eliminatedBy?: string;
+  finalRound: number;
+  survivedRounds: number;
+  revivedCount: number;
 }
 
 const NORMAL_SEGMENTS: WheelSegment[] = [
@@ -46,6 +58,32 @@ function createPlayer(name: string): Player {
   };
 }
 
+function useResponsiveWheelSize() {
+  const [wheelSize, setWheelSize] = useState(500);
+
+  useEffect(() => {
+    function updateSize() {
+      if (window.matchMedia('(min-width: 1536px)').matches) {
+        setWheelSize(750);  // 2xl: 1440p screens
+      } else if (window.matchMedia('(min-width: 1280px)').matches) {
+        setWheelSize(600);  // xl: large desktops
+      } else if (window.matchMedia('(min-width: 1024px)').matches) {
+        setWheelSize(500);  // lg: standard desktops
+      } else if (window.matchMedia('(min-width: 640px)').matches) {
+        setWheelSize(380);  // sm: tablets
+      } else {
+        setWheelSize(280);  // mobile
+      }
+    }
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  return wheelSize;
+}
+
 export default function Home() {
   const [mode, setMode] = useState<GameMode>("normal");
   const [phase, setPhase] = useState<GamePhase>("setup");
@@ -56,8 +94,10 @@ export default function Home() {
   const [lastResult, setLastResult] = useState<GameResult | null>(null);
   const [round, setRound] = useState(1);
   const [autoSpinEnabled, setAutoSpinEnabled] = useState(false);
+  const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
+  const wheelSize = useResponsiveWheelSize();
 
   const segments = mode === "normal" ? NORMAL_SEGMENTS : BATTLE_SEGMENTS;
   const activePlayers = players.filter((p) => p.status === "active");
@@ -116,6 +156,7 @@ export default function Home() {
     setLastResult(null);
     setCurrentPlayerIndex(0);
     setRound(1);
+    setFinalRankings([]);
     setPlayers((prev) => prev.map((p) => ({ ...p, status: "active" as const, score: 0 })));
   }, []);
 
@@ -210,6 +251,47 @@ export default function Home() {
     [activePlayers, currentPlayerIndex, players, getNextActivePlayerIndex, autoSpinEnabled, phase],
   );
 
+  const calculateRankings = useCallback((playerList: Player[], totalRounds: number): BattleRoyaleRanking[] => {
+    const winner = playerList.find(p => p.status === "winner");
+    const eliminated = playerList.filter(p => p.status === "eliminated");
+
+    // Sort by timestamp DESC (most recent elimination = highest rank)
+    const sortedEliminated = [...eliminated].sort((a, b) => {
+      if (!a.eliminationData || !b.eliminationData) return 0;
+      return b.eliminationData.timestamp - a.eliminationData.timestamp;
+    });
+
+    const rankings: BattleRoyaleRanking[] = [];
+
+    // Winner = rank 1
+    if (winner) {
+      rankings.push({
+        playerId: winner.id,
+        playerName: winner.name,
+        rank: 1,
+        finalRound: totalRounds,
+        survivedRounds: totalRounds,
+        revivedCount: winner.revivedCount || 0,
+      });
+    }
+
+    // Eliminated players = ranks 2, 3, 4, ...
+    sortedEliminated.forEach((player, index) => {
+      rankings.push({
+        playerId: player.id,
+        playerName: player.name,
+        rank: index + 2,
+        eliminationCause: player.eliminationData?.cause,
+        eliminatedBy: player.eliminationData?.eliminatedBy,
+        finalRound: player.eliminationData?.round || 0,
+        survivedRounds: player.eliminationData?.round || 0,
+        revivedCount: player.revivedCount || 0,
+      });
+    });
+
+    return rankings;
+  }, []);
+
   const handleBattleResult = useCallback(
     (segment: WheelSegment) => {
       const currentPlayer = players[currentPlayerIndex];
@@ -226,6 +308,11 @@ export default function Home() {
           updatedPlayers[currentPlayerIndex] = {
             ...currentPlayer,
             status: "eliminated",
+            eliminationData: {
+              cause: "Defeat",
+              round: round,
+              timestamp: Date.now(),
+            },
           };
           detail = `${currentPlayer.name} has been defeated and eliminated!`;
           break;
@@ -234,10 +321,16 @@ export default function Home() {
           detail = `${currentPlayer.name} gained immunity! Safe this round.`;
           break;
         case "Double Elim": {
-          // Eliminate current player and a random other active player
+          // Eliminate current player (spinner)
+          const spinnerTimestamp = Date.now();
           updatedPlayers[currentPlayerIndex] = {
             ...currentPlayer,
             status: "eliminated",
+            eliminationData: {
+              cause: "Double Elimination",
+              round: round,
+              timestamp: spinnerTimestamp,
+            },
           };
           const otherActive = updatedPlayers.filter(
             (p, i) => p.status === "active" && i !== currentPlayerIndex,
@@ -245,7 +338,16 @@ export default function Home() {
           if (otherActive.length > 0) {
             const victim = otherActive[Math.floor(Math.random() * otherActive.length)];
             const victimIdx = updatedPlayers.findIndex((p) => p.id === victim.id);
-            updatedPlayers[victimIdx] = { ...victim, status: "eliminated" };
+            updatedPlayers[victimIdx] = {
+              ...victim,
+              status: "eliminated",
+              eliminationData: {
+                cause: "Double Elimination",
+                eliminatedBy: currentPlayer.name,
+                round: round,
+                timestamp: spinnerTimestamp + 1,  // +1ms ensures victim ranks below spinner
+              },
+            };
             detail = `Double elimination! ${currentPlayer.name} and ${victim.name} are both eliminated!`;
           } else {
             detail = `${currentPlayer.name} has been eliminated!`;
@@ -258,6 +360,11 @@ export default function Home() {
             updatedPlayers[currentPlayerIndex] = {
               ...currentPlayer,
               status: "eliminated",
+              eliminationData: {
+                cause: "Sudden Death",
+                round: round,
+                timestamp: Date.now(),
+              },
             };
             detail = `Sudden Death! ${currentPlayer.name} didn't survive!`;
           } else {
@@ -270,7 +377,11 @@ export default function Home() {
           if (eliminated.length > 0) {
             const revived = eliminated[Math.floor(Math.random() * eliminated.length)];
             const revivedIdx = updatedPlayers.findIndex((p) => p.id === revived.id);
-            updatedPlayers[revivedIdx] = { ...revived, status: "active" };
+            updatedPlayers[revivedIdx] = {
+              ...revived,
+              status: "active",
+              revivedCount: (revived.revivedCount || 0) + 1,
+            };
             detail = `Extra Life! ${currentPlayer.name} revived ${revived.name}!`;
           } else {
             detail = `${currentPlayer.name} found an Extra Life, but no one to revive!`;
@@ -303,7 +414,17 @@ export default function Home() {
             segment: "WINNER",
             detail: `${remaining[0].name} is the last one standing! Champion!`,
           });
+        } else {
+          // No survivors
+          setLastResult({
+            playerName: "No Survivors",
+            segment: "GAME OVER",
+            detail: "All players have been eliminated! No champion!",
+          });
         }
+        // Calculate final rankings
+        const rankings = calculateRankings(updatedPlayers, round);
+        setFinalRankings(rankings);
         setPhase("finished");
       } else {
         // Move to next active player
@@ -363,13 +484,13 @@ export default function Home() {
       {/* Battle Result Overlay - Fixed at top */}
       {lastResult && !spinning && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
-          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md mx-4">
+          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md xl:max-w-lg 2xl:max-w-xl mx-4">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <div className="text-sm font-bold text-accent mb-1 uppercase tracking-wide">
+                <div className="text-sm xl:text-base 2xl:text-lg font-bold text-accent mb-1 uppercase tracking-wide">
                   {lastResult.segment}
                 </div>
-                <p className="text-base font-medium text-white">
+                <p className="text-base xl:text-lg 2xl:text-xl font-medium text-white">
                   {lastResult.detail}
                 </p>
               </div>
@@ -387,9 +508,9 @@ export default function Home() {
 
       <main className="min-h-screen bg-background py-4 px-1">
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row lg:items-start gap-2">
+      <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
         {/* Left Panel: Players */}
-        <div className="lg:w-72 shrink-0">
+        <div className="lg:w-72 xl:w-80 2xl:w-96 shrink-0">
           <PlayerList
             players={players}
             currentPlayerIndex={currentPlayerIndex}
@@ -433,7 +554,7 @@ export default function Home() {
         <div className="flex-1 flex flex-col items-center">
           {/* Header */}
           <header className="text-center mb-3 w-full">
-            <h1 className="text-3xl md:text-4xl font-bold">
+            <h1 className="text-3xl md:text-4xl xl:text-5xl 2xl:text-6xl font-bold">
               <span className="text-accent">Wheel</span> of Ethereal
             </h1>
 
@@ -473,17 +594,28 @@ export default function Home() {
           {/* Current Player Banner */}
           {phase === "playing" && currentPlayerName && (
             <div className="mb-2 bg-surface rounded-xl px-5 py-2 text-center fade-in">
-              <span className="text-text-muted text-xs">Current Player</span>
-              <p className="text-lg font-bold text-accent">{currentPlayerName}</p>
+              <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">Current Player</span>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-bold text-accent">{currentPlayerName}</p>
               {mode === "battle-royale" && (
-                <span className="text-text-muted text-xs">
+                <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">
                   Round {round} &middot; {activePlayers.length} remaining
                 </span>
               )}
             </div>
           )}
 
-          {phase === "finished" && (
+          {phase === "finished" && mode === "battle-royale" && (
+            <div className="mb-4 w-full max-w-5xl">
+              <BattleRoyaleResults
+                rankings={finalRankings}
+                totalPlayers={players.length}
+                totalRounds={round}
+                compact={false}
+              />
+            </div>
+          )}
+
+          {phase === "finished" && mode === "normal" && (
             <div className="mb-2 bg-accent/20 border border-accent rounded-xl px-8 py-4 text-center fade-in">
               <p className="text-2xl font-bold text-accent">Game Over!</p>
               {players.find((p) => p.status === "winner") && (
@@ -505,7 +637,7 @@ export default function Home() {
             spinning={spinning}
             onSpinStart={handleSpinStart}
             disabled={!canSpin}
-            size={600}
+            size={wheelSize}
             autoSpinEnabled={autoSpinEnabled}
             onAutoSpinChange={(enabled) => {
               setAutoSpinEnabled(enabled);
@@ -520,9 +652,9 @@ export default function Home() {
         </div>
 
         {/* Right Panel: Results Log */}
-        <div className="lg:w-64 shrink-0">
+        <div className="lg:w-64 xl:w-72 2xl:w-80 shrink-0">
           <div className="bg-surface rounded-xl p-4">
-            <h2 className="text-lg font-bold mb-3 text-accent">Results</h2>
+            <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Results</h2>
             {results.length === 0 ? (
               <p className="text-text-muted text-sm text-center py-4">
                 No spins yet
@@ -532,7 +664,7 @@ export default function Home() {
                 {results.map((r, i) => (
                   <div
                     key={i}
-                    className="bg-surface-light/50 rounded-lg px-3 py-2 text-sm"
+                    className="bg-surface-light/50 rounded-lg px-3 py-2 text-sm xl:text-base 2xl:text-lg"
                   >
                     <span className="font-semibold text-accent">
                       {r.playerName}
@@ -547,14 +679,14 @@ export default function Home() {
           {/* Normal Mode Scoreboard */}
           {mode === "normal" && players.length > 0 && phase !== "setup" && (
             <div className="bg-surface rounded-xl p-4 mt-4">
-              <h2 className="text-lg font-bold mb-3 text-accent">Scoreboard</h2>
+              <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Scoreboard</h2>
               <div className="space-y-1">
                 {[...players]
                   .sort((a, b) => b.score - a.score)
                   .map((p) => (
                     <div
                       key={p.id}
-                      className="flex justify-between text-sm px-2 py-1 rounded bg-surface-light/30"
+                      className="flex justify-between text-sm xl:text-base 2xl:text-lg px-2 py-1 rounded bg-surface-light/30"
                     >
                       <span className="truncate">{p.name}</span>
                       <span

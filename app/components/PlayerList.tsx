@@ -7,6 +7,13 @@ export interface Player {
   name: string;
   status: "active" | "eliminated" | "winner";
   score: number;
+  eliminationData?: {
+    cause: "Defeat" | "Double Elimination" | "Sudden Death";
+    eliminatedBy?: string;  // Player name who caused elimination (Double Elim only)
+    round: number;
+    timestamp: number;  // For precise ordering (Date.now())
+  };
+  revivedCount?: number;  // Times revived by Extra Life
 }
 
 interface PlayerListProps {
@@ -101,8 +108,8 @@ export default function PlayerList({
   const compact = players.length >= 16;
 
   return (
-    <div className="bg-surface rounded-xl p-4 w-full">
-      <h2 className="text-lg font-bold mb-3 text-accent">Players</h2>
+    <div className="bg-surface rounded-xl p-4 xl:p-5 2xl:p-6 w-full">
+      <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Players</h2>
 
       {!gameActive && (
         <div className="flex gap-2 mb-4">
@@ -113,11 +120,11 @@ export default function PlayerList({
             onKeyDown={handleKeyDown}
             placeholder="Enter player name"
             maxLength={24}
-            className="flex-1 bg-surface-light border border-gray-600 rounded-lg px-3 py-2 text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+            className="flex-1 bg-surface-light border border-gray-600 rounded-lg px-3 py-2 xl:py-2.5 2xl:py-3 text-sm xl:text-base 2xl:text-lg text-white placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
           />
           <button
             onClick={handleAdd}
-            className="bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="bg-accent hover:bg-accent-hover text-white px-4 py-2 xl:py-2.5 2xl:py-3 rounded-lg text-sm xl:text-base 2xl:text-lg font-semibold transition-colors"
           >
             Add
           </button>
@@ -220,7 +227,7 @@ export default function PlayerList({
       )}
 
       <div
-        className={`overflow-y-auto ${compact ? "max-h-80" : "max-h-96"}`}
+        className={`overflow-y-auto ${compact ? "max-h-80 xl:max-h-[500px] 2xl:max-h-[600px]" : "max-h-96 xl:max-h-[540px] 2xl:max-h-[650px]"}`}
         style={{ scrollbarGutter: "stable" }}
       >
         {players.length === 0 ? (
@@ -232,7 +239,7 @@ export default function PlayerList({
                 key={player.id}
                 className={`
                   flex items-center justify-between rounded-lg transition-all duration-200
-                  ${compact ? "px-2 py-1 text-sm" : "px-3 py-2"}
+                  ${compact ? "px-2 py-1 text-sm xl:text-base 2xl:text-lg" : "px-3 py-2 text-sm xl:text-base 2xl:text-lg"}
                   ${
                     player.status === "eliminated"
                       ? "player-eliminated bg-surface-light/30"

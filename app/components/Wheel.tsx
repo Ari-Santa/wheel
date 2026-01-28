@@ -81,7 +81,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       ctx.translate(textX, textY);
       ctx.rotate(textAngle + Math.PI / 2);
       ctx.fillStyle = "#ffffff";
-      ctx.font = `bold ${Math.max(16, Math.min(26, size / 20))}px sans-serif`;
+      ctx.font = `bold ${Math.max(16, Math.min(36, size / 18))}px sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0,0,0,0.7)";
@@ -89,7 +89,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 
       // Word wrap for long labels
       const words = segment.label.split(" ");
-      const lineSpacing = Math.max(10, size / 50); // Dynamic line spacing
+      const lineSpacing = Math.max(10, size / 45); // Dynamic line spacing
       if (words.length > 1 && segment.label.length > 10) {
         const mid = Math.ceil(words.length / 2);
         const line1 = words.slice(0, mid).join(" ");
@@ -183,7 +183,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
           onClick={spin}
           disabled={disabled || spinning}
           className={`
-            px-10 py-4 rounded-xl text-lg font-bold uppercase tracking-wider
+            px-10 py-4 xl:px-12 xl:py-5 2xl:px-14 2xl:py-6 rounded-xl text-lg xl:text-xl 2xl:text-2xl font-bold uppercase tracking-wider
             transition-all duration-200
             ${
               disabled || spinning
