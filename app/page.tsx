@@ -162,7 +162,7 @@ export default function Home() {
   const [results, setResults] = useState<GameResult[]>([]);
   const [lastResult, setLastResult] = useState<GameResult | null>(null);
   const [round, setRound] = useState(1);
-  const [autoSpinEnabled, setAutoSpinEnabled] = useState(false);
+  const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
@@ -737,16 +737,16 @@ export default function Home() {
                   >
                     {/* Player name and segment on first line */}
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-semibold text-accent truncate">
+                      <span className="font-semibold text-accent truncate text-sm">
                         {r.playerName}
                       </span>
-                      <span className="text-text-muted text-[10px] xl:text-xs">
+                      <span className="text-text-muted text-[10px]">
                         {r.segment}
                       </span>
                     </div>
 
                     {/* Detail with visual formatting */}
-                    <div className="text-[10px] xl:text-xs leading-tight">
+                    <div className="text-[10px] leading-tight">
                       {formatResultDetail(r.detail)}
                     </div>
                   </div>

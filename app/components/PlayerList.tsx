@@ -261,7 +261,7 @@ export default function PlayerList({
                   {player.status === "active" && index === currentPlayerIndex && gameActive && (
                     <span className="text-accent shrink-0">&#9654;</span>
                   )}
-                  <span className="truncate">{player.name}</span>
+                  <span className="truncate text-sm">{player.name}</span>
                   {mode === "normal" && player.score !== 0 && (
                     <span className={`text-xs ml-1 ${player.score > 0 ? "text-success" : "text-danger"}`}>
                       ({player.score > 0 ? "+" : ""}{player.score})
