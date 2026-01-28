@@ -58,6 +58,75 @@ function createPlayer(name: string): Player {
   };
 }
 
+/**
+ * Formats the result detail string with appropriate styling and icons
+ */
+function formatResultDetail(detail: string): React.ReactNode {
+  // Battle Royale specific formatting
+  if (detail.includes("eliminated") || detail.includes("survived") || detail.includes("revived")) {
+
+    // Double Elimination - highlight both players
+    if (detail.includes("Double elimination!")) {
+      const match = detail.match(/Double elimination! (.+) and (.+) are both eliminated!/);
+      if (match) {
+        return (
+          <span className="text-danger">
+            ⚔️ {match[1]} & {match[2]} eliminated
+          </span>
+        );
+      }
+    }
+
+    // Extra Life - show who revived who
+    if (detail.includes("revived")) {
+      const match = detail.match(/Extra Life! (.+) revived (.+)!/);
+      if (match) {
+        return (
+          <span className="text-green-400">
+            💚 Revived <span className="font-semibold">{match[2]}</span>
+          </span>
+        );
+      }
+    }
+
+    // Defeat
+    if (detail.includes("defeated and eliminated")) {
+      return <span className="text-danger">☠️ Eliminated</span>;
+    }
+
+    // Sudden Death
+    if (detail.includes("Sudden Death!")) {
+      if (detail.includes("survived")) {
+        return <span className="text-green-400">🍀 Survived Sudden Death!</span>;
+      } else {
+        return <span className="text-danger">⚡ Died in Sudden Death</span>;
+      }
+    }
+
+    // Immunity
+    if (detail.includes("immunity")) {
+      return <span className="text-blue-400">🛡️ Gained Immunity</span>;
+    }
+  }
+
+  // Normal mode - show point changes
+  if (detail.includes("points")) {
+    if (detail.includes("Gained") || detail.includes("Won")) {
+      return <span className="text-success">{detail}</span>;
+    } else if (detail.includes("Lost")) {
+      return <span className="text-danger">{detail}</span>;
+    }
+  }
+
+  // Spin Again
+  if (detail.includes("Spin Again")) {
+    return <span className="text-accent">{detail}</span>;
+  }
+
+  // Default: return as-is with muted color
+  return <span className="text-text-muted">{detail}</span>;
+}
+
 function useResponsiveWheelSize() {
   const [wheelSize, setWheelSize] = useState(500);
 
@@ -664,12 +733,22 @@ export default function Home() {
                 {results.map((r, i) => (
                   <div
                     key={i}
-                    className="bg-surface-light/50 rounded-lg px-3 py-2 text-sm xl:text-base 2xl:text-lg"
+                    className="bg-surface-light/50 rounded-lg px-2.5 py-2 text-xs xl:text-sm"
                   >
-                    <span className="font-semibold text-accent">
-                      {r.playerName}
-                    </span>
-                    <span className="text-text-muted"> &mdash; {r.segment}</span>
+                    {/* Player name and segment on first line */}
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="font-semibold text-accent truncate">
+                        {r.playerName}
+                      </span>
+                      <span className="text-text-muted text-[10px] xl:text-xs">
+                        {r.segment}
+                      </span>
+                    </div>
+
+                    {/* Detail with visual formatting */}
+                    <div className="text-[10px] xl:text-xs leading-tight">
+                      {formatResultDetail(r.detail)}
+                    </div>
                   </div>
                 ))}
               </div>

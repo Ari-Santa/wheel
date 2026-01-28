@@ -19,10 +19,10 @@ export default function BattleRoyaleResults({
   const restOfField = rankings.slice(3);
 
   return (
-    <div className="bg-surface rounded-xl p-4 xl:p-6 2xl:p-8 w-full">
+    <div className="bg-surface rounded-xl p-3 xl:p-4 2xl:p-6 w-full">
       {/* Header */}
       <div className="mb-4 xl:mb-6">
-        <h2 className="text-2xl xl:text-3xl 2xl:text-4xl font-bold text-accent">
+        <h2 className="text-xl xl:text-2xl 2xl:text-3xl font-bold text-accent">
           Battle Royale Results
         </h2>
         <p className="text-text-muted text-sm xl:text-base 2xl:text-lg mt-1">
@@ -31,16 +31,16 @@ export default function BattleRoyaleResults({
       </div>
 
       {/* Top 3 Podium */}
-      <div className="mb-6 xl:mb-8">
-        <h3 className="text-lg xl:text-xl 2xl:text-2xl font-semibold mb-3 text-white">
+      <div className="mb-4 xl:mb-6">
+        <h3 className="text-base xl:text-lg 2xl:text-xl font-semibold mb-3 text-white">
           Top 3
         </h3>
-        <div className="space-y-2 xl:space-y-3">
+        <div className="space-y-1.5 xl:space-y-2">
           {topThree.map((ranking) => (
             <div
               key={ranking.playerId}
               className={`
-                flex items-center gap-3 xl:gap-4 p-3 xl:p-4 rounded-lg transition-all
+                flex items-center gap-3 xl:gap-4 p-2.5 xl:p-3 rounded-lg transition-all
                 ${ranking.rank === 1
                   ? "bg-accent/20 border-2 border-accent"
                   : "bg-surface-light"}
@@ -48,9 +48,9 @@ export default function BattleRoyaleResults({
             >
               {/* Rank Badge */}
               <div className={`
-                flex-shrink-0 w-10 h-10 xl:w-12 xl:h-12 2xl:w-14 2xl:h-14
+                flex-shrink-0 w-8 h-8 xl:w-10 xl:h-10 2xl:w-12 2xl:h-12
                 rounded-full flex items-center justify-center font-bold
-                text-lg xl:text-xl 2xl:text-2xl
+                text-base xl:text-lg 2xl:text-xl
                 ${ranking.rank === 1 ? "bg-yellow-500 text-black" :
                   ranking.rank === 2 ? "bg-gray-400 text-black" :
                   "bg-amber-700 text-white"}
@@ -61,11 +61,11 @@ export default function BattleRoyaleResults({
               {/* Player Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-base xl:text-lg 2xl:text-xl">
+                  <span className="font-bold text-sm xl:text-base 2xl:text-lg">
                     {ranking.playerName}
                   </span>
                   {ranking.revivedCount > 0 && (
-                    <span className="text-xs xl:text-sm bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
+                    <span className="text-[10px] xl:text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded">
                       Revived {ranking.revivedCount}x
                     </span>
                   )}
@@ -73,18 +73,30 @@ export default function BattleRoyaleResults({
 
                 {/* Elimination Details (2nd/3rd place) */}
                 {ranking.rank > 1 && ranking.eliminationCause && (
-                  <div className="text-xs xl:text-sm 2xl:text-base text-text-muted mt-1">
-                    <span>Eliminated: {ranking.eliminationCause}</span>
+                  <div className="mt-1.5 space-y-0.5">
+                    <div className="text-[11px] xl:text-xs 2xl:text-sm text-text-muted">
+                      Eliminated in <span className="text-white font-medium">Round {ranking.finalRound}</span>
+                    </div>
+                    <div className="text-[11px] xl:text-xs 2xl:text-sm text-text-muted">
+                      Method: <span className="text-white font-medium">{ranking.eliminationCause}</span>
+                    </div>
                     {ranking.eliminatedBy && (
-                      <span className="text-danger ml-1">by {ranking.eliminatedBy}</span>
+                      <div className="text-[11px] xl:text-xs 2xl:text-sm">
+                        <span className="text-danger">⚔️ Eliminated by:</span>{" "}
+                        <span className="text-danger font-bold">{ranking.eliminatedBy}</span>
+                      </div>
                     )}
-                    <span className="ml-2">• Round {ranking.finalRound}</span>
+                    {!ranking.eliminatedBy && (
+                      <div className="text-[11px] xl:text-xs 2xl:text-sm text-text-muted italic">
+                        Self-elimination
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Winner Details */}
                 {ranking.rank === 1 && (
-                  <div className="text-xs xl:text-sm 2xl:text-base text-accent mt-1">
+                  <div className="text-[11px] xl:text-xs 2xl:text-sm text-accent mt-1">
                     Champion • Survived all {ranking.survivedRounds} rounds
                   </div>
                 )}
@@ -97,26 +109,43 @@ export default function BattleRoyaleResults({
       {/* Rest of Field - Collapsible */}
       {restOfField.length > 0 && (
         <details className={compact ? "" : "open"}>
-          <summary className="text-base xl:text-lg 2xl:text-xl font-semibold mb-3 cursor-pointer hover:text-accent transition-colors">
+          <summary className="text-sm xl:text-base 2xl:text-lg font-semibold mb-3 cursor-pointer hover:text-accent transition-colors">
             Rest of Field ({restOfField.length} players)
           </summary>
-          <div className="space-y-1 xl:space-y-2 max-h-64 xl:max-h-96 overflow-y-auto">
+          <div className="space-y-1 xl:space-y-1.5 max-h-64 xl:max-h-96 overflow-y-auto">
             {restOfField.map((ranking) => (
               <div
                 key={ranking.playerId}
-                className="flex items-center justify-between bg-surface-light/50 p-2 xl:p-3 rounded-lg text-xs xl:text-sm 2xl:text-base"
+                className="bg-surface-light/50 p-2 xl:p-2.5 rounded-lg"
               >
-                <div className="flex items-center gap-2 xl:gap-3 min-w-0">
-                  <span className="text-text-muted font-mono w-6 xl:w-8 shrink-0">
-                    #{ranking.rank}
-                  </span>
-                  <span className="font-medium truncate">{ranking.playerName}</span>
+                {/* Player name and rank */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 xl:gap-2.5 min-w-0">
+                    <span className="text-text-muted font-mono text-[10px] xl:text-xs w-6 shrink-0">
+                      #{ranking.rank}
+                    </span>
+                    <span className="font-medium text-xs xl:text-sm truncate">
+                      {ranking.playerName}
+                    </span>
+                    {ranking.revivedCount > 0 && (
+                      <span className="text-[9px] xl:text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded">
+                        +{ranking.revivedCount}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                <div className="text-text-muted text-xs xl:text-sm shrink-0 ml-2">
-                  {ranking.eliminationCause}
-                  {ranking.eliminatedBy && ` by ${ranking.eliminatedBy}`}
-                  {" • R" + ranking.finalRound}
+                {/* Elimination details on second line */}
+                <div className="flex items-center gap-2 mt-1 text-[10px] xl:text-xs text-text-muted">
+                  <span>{ranking.eliminationCause}</span>
+                  {ranking.eliminatedBy && (
+                    <>
+                      <span className="text-text-muted">•</span>
+                      <span className="text-danger">by {ranking.eliminatedBy}</span>
+                    </>
+                  )}
+                  <span className="text-text-muted">•</span>
+                  <span>Round {ranking.finalRound}</span>
                 </div>
               </div>
             ))}
@@ -125,22 +154,36 @@ export default function BattleRoyaleResults({
       )}
 
       {/* Fun Stats */}
-      <div className="mt-6 xl:mt-8 pt-4 xl:pt-6 border-t border-gray-600">
-        <h3 className="text-base xl:text-lg 2xl:text-xl font-semibold mb-3">
+      <div className="mt-4 xl:mt-6 pt-3 xl:pt-4 border-t border-gray-600">
+        <h3 className="text-sm xl:text-base 2xl:text-lg font-semibold mb-3">
           Battle Statistics
         </h3>
-        <div className="grid grid-cols-2 gap-3 xl:gap-4 text-xs xl:text-sm 2xl:text-base">
-          <div className="bg-surface-light p-2 xl:p-3 rounded">
-            <div className="text-text-muted">Most Revived</div>
-            <div className="font-bold text-sm xl:text-base 2xl:text-lg text-green-400 mt-1">
+        <div className="grid grid-cols-2 gap-2 xl:gap-3 text-xs xl:text-sm 2xl:text-base">
+          <div className="bg-surface-light p-2 xl:p-2.5 rounded">
+            <div className="text-text-muted text-[10px] xl:text-xs">Most Revived</div>
+            <div className="font-bold text-xs xl:text-sm 2xl:text-base text-green-400 mt-0.5">
               {getMostRevived(rankings)}
             </div>
           </div>
 
-          <div className="bg-surface-light p-2 xl:p-3 rounded">
-            <div className="text-text-muted">Most Deadly</div>
-            <div className="font-bold text-sm xl:text-base 2xl:text-lg text-danger mt-1">
+          <div className="bg-surface-light p-2 xl:p-2.5 rounded">
+            <div className="text-text-muted text-[10px] xl:text-xs">Most Deadly</div>
+            <div className="font-bold text-xs xl:text-sm 2xl:text-base text-danger mt-0.5">
               {getMostDeadly(rankings)}
+            </div>
+          </div>
+
+          <div className="bg-surface-light p-2 xl:p-2.5 rounded">
+            <div className="text-text-muted text-[10px] xl:text-xs">Longest Survivor</div>
+            <div className="font-bold text-xs xl:text-sm 2xl:text-base text-blue-400 mt-0.5">
+              {getLongestSurvivor(rankings)}
+            </div>
+          </div>
+
+          <div className="bg-surface-light p-2 xl:p-2.5 rounded">
+            <div className="text-text-muted text-[10px] xl:text-xs">First Eliminated</div>
+            <div className="font-bold text-xs xl:text-sm 2xl:text-base text-orange-400 mt-0.5">
+              {getFirstEliminated(rankings)}
             </div>
           </div>
         </div>
@@ -178,4 +221,23 @@ function getMostDeadly(rankings: BattleRoyaleRanking[]): string {
   );
 
   return `${player} (${kills})`;
+}
+
+// Helper: Find player who survived longest before elimination
+function getLongestSurvivor(rankings: BattleRoyaleRanking[]): string {
+  const eliminated = rankings.filter(r => r.rank > 1);
+  if (eliminated.length === 0) return "N/A";
+
+  const max = eliminated.reduce((max, r) =>
+    r.survivedRounds > (max?.survivedRounds || 0) ? r : max
+  );
+
+  return `${max.playerName} (${max.survivedRounds} rounds)`;
+}
+
+// Helper: Find first player eliminated
+function getFirstEliminated(rankings: BattleRoyaleRanking[]): string {
+  if (rankings.length === 0) return "N/A";
+  const lastRank = rankings[rankings.length - 1];
+  return `${lastRank.playerName} (R${lastRank.finalRound})`;
 }
