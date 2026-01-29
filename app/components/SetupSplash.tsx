@@ -348,34 +348,34 @@ export default function SetupSplash({
 
           {/* Player List Header */}
           {players.length > 0 && (
-            <div className="flex justify-between items-center mb-3">
-              <label className="text-sm font-semibold text-text-muted uppercase tracking-wide">
-                Current Players ({players.length})
+            <div className="flex justify-between items-center mb-2">
+              <label className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+                Players ({players.length})
               </label>
               <button
                 onClick={() => {
                   players.forEach((player) => onRemovePlayer(player.id));
                 }}
-                className="text-sm text-text-muted hover:text-danger transition-colors"
+                className="text-xs text-text-muted hover:text-danger transition-colors"
                 title="Remove all players from the game"
               >
-                Remove All
+                Clear
               </button>
             </div>
           )}
 
           {/* Player List */}
           {players.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-1.5 max-h-48 overflow-y-auto">
               {players.map((player) => (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between bg-surface-light/50 rounded-lg px-4 py-2"
+                  className="flex items-center justify-between bg-surface-light/50 rounded px-2 py-1 text-sm"
                 >
-                  <span className="font-medium">{player.name}</span>
+                  <span className="truncate flex-1">{player.name}</span>
                   <button
                     onClick={() => onRemovePlayer(player.id)}
-                    className="text-text-muted hover:text-danger transition-colors text-xl leading-none"
+                    className="text-text-muted hover:text-danger transition-colors text-lg leading-none ml-1 flex-shrink-0"
                     aria-label={`Remove ${player.name}`}
                   >
                     ×
@@ -384,7 +384,7 @@ export default function SetupSplash({
               ))}
             </div>
           ) : (
-            <p className="text-text-muted text-center py-4">
+            <p className="text-text-muted text-center py-3 text-sm">
               No players added yet
             </p>
           )}
