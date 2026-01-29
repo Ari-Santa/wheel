@@ -129,7 +129,7 @@ export default function SetupSplash({
 
   return (
     <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
-      <div className="w-full max-w-2xl mx-auto px-4 py-8">
+      <div className="w-full max-w-4xl mx-auto px-4 py-8">
         {/* Title Section */}
         <header className="text-center mb-8 animate-fade-in">
           <h1 className="text-5xl md:text-6xl xl:text-7xl font-bold mb-2">
@@ -346,9 +346,27 @@ export default function SetupSplash({
             </p>
           )}
 
+          {/* Player List Header */}
+          {players.length > 0 && (
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-sm font-semibold text-text-muted uppercase tracking-wide">
+                Current Players ({players.length})
+              </label>
+              <button
+                onClick={() => {
+                  players.forEach((player) => onRemovePlayer(player.id));
+                }}
+                className="text-sm text-text-muted hover:text-danger transition-colors"
+                title="Remove all players from the game"
+              >
+                Remove All
+              </button>
+            </div>
+          )}
+
           {/* Player List */}
           {players.length > 0 ? (
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
               {players.map((player) => (
                 <div
                   key={player.id}
