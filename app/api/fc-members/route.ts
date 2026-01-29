@@ -15,6 +15,7 @@ export async function GET() {
     // Check if cache is valid
     const now = Date.now();
     if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
+      console.log(`[FC Members API] Cache HIT - Serving ${cachedData.names.length} members from cache`);
       return NextResponse.json({
         names: cachedData.names,
         cached: true,
@@ -25,6 +26,7 @@ export async function GET() {
     }
 
     // Fetch fresh data from Lodestone
+    console.log('[FC Members API] Cache MISS - Fetching fresh data from Lodestone');
     const response = await fetch(LODESTONE_URL, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
@@ -70,6 +72,7 @@ export async function GET() {
       names,
       timestamp: now,
     };
+    console.log(`[FC Members API] Cache updated - Stored ${names.length} members`);
 
     return NextResponse.json({
       names,
@@ -84,6 +87,7 @@ export async function GET() {
 
     // Return cached data if available, even if expired
     if (cachedData) {
+      console.log('[FC Members API] Returning STALE cache due to error');
       return NextResponse.json({
         names: cachedData.names,
         cached: true,
@@ -99,6 +103,7 @@ export async function GET() {
     const envPlayers = process.env.NEXT_PUBLIC_PRESET_PLAYERS
       ? process.env.NEXT_PUBLIC_PRESET_PLAYERS.split(",").map((s) => s.trim()).filter(Boolean)
       : [];
+    console.log(`[FC Members API] Using FALLBACK - Returning ${envPlayers.length} players from environment variables`);
 
     return NextResponse.json({
       names: envPlayers,
