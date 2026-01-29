@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export interface Player {
   id: string;
@@ -40,27 +40,26 @@ export default function PlayerList({
   mode,
 }: PlayerListProps) {
   const [newName, setNewName] = useState("");
-  const [savedPlayers, setSavedPlayers] = useState<string[]>([]);
-
-  // Load saved players from localStorage on mount
-  useEffect(() => {
+  const [savedPlayers, setSavedPlayers] = useState<string[]>(() => {
+    // Initialize from localStorage
     try {
       const stored = localStorage.getItem(SAVED_PLAYERS_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setSavedPlayers(Array.isArray(parsed) ? parsed : []);
+        return Array.isArray(parsed) ? parsed : [];
       }
-    } catch (e) {
+    } catch {
       // Silently handle parse errors
     }
-  }, []);
+    return [];
+  });
 
   const saveToStorage = (name: string) => {
     setSavedPlayers((prev) => {
       const updated = prev.includes(name) ? prev : [...prev, name];
       try {
         localStorage.setItem(SAVED_PLAYERS_KEY, JSON.stringify(updated));
-      } catch (e) {
+      } catch {
         // Silently handle quota exceeded or other errors
       }
       return updated;
@@ -72,7 +71,7 @@ export default function PlayerList({
       const updated = prev.filter((p) => p !== name);
       try {
         localStorage.setItem(SAVED_PLAYERS_KEY, JSON.stringify(updated));
-      } catch (e) {
+      } catch {
         // Silently handle errors
       }
       return updated;
@@ -83,7 +82,7 @@ export default function PlayerList({
     setSavedPlayers([]);
     try {
       localStorage.removeItem(SAVED_PLAYERS_KEY);
-    } catch (e) {
+    } catch {
       // Silently handle errors
     }
   };

@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
-import BattleRoyaleResults from "./components/BattleRoyaleResults";
 import SetupSplash from "./components/SetupSplash";
 import ResultsSplash from "./components/ResultsSplash";
 
@@ -546,7 +545,7 @@ export default function Home() {
         }, 2000);
       }
     },
-    [players, currentPlayerIndex, mode, getNextActivePlayerIndex, autoSpinEnabled],
+    [players, currentPlayerIndex, mode, getNextActivePlayerIndex, autoSpinEnabled, round, calculateRankings],
   );
 
   const handleResult = useCallback(

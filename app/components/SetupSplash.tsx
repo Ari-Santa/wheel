@@ -128,7 +128,7 @@ export default function SetupSplash({
   };
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex items-center justify-center overflow-y-auto">
+    <div className="fixed inset-0 bg-background z-50 overflow-y-auto">
       <div className="w-full max-w-2xl mx-auto px-4 py-8">
         {/* Title Section */}
         <header className="text-center mb-8 animate-fade-in">

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { decode } from "he";
 
 const LODESTONE_URL = "https://eu.finalfantasyxiv.com/lodestone/freecompany/9234631035923366072/member/";
 const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
@@ -44,7 +45,7 @@ export async function GET() {
     let match;
 
     while ((match = nameRegex.exec(html)) !== null) {
-      const name = match[1].trim();
+      const name = decode(match[1].trim());
       if (name) {
         namesSet.add(name);
       }
@@ -57,7 +58,7 @@ export async function GET() {
     if (names.length === 0) {
       const altRegex = /<li class="entry">[\s\S]*?<p class="entry__name">([^<]+)<\/p>/g;
       while ((match = altRegex.exec(html)) !== null) {
-        const name = match[1].trim();
+        const name = decode(match[1].trim());
         if (name) {
           namesSet.add(name);
         }
