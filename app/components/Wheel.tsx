@@ -209,7 +209,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
           onClick={spin}
           disabled={disabled || spinning}
           className={`
-            px-10 py-4 xl:px-12 xl:py-5 2xl:px-14 2xl:py-6 rounded-xl text-lg xl:text-xl 2xl:text-2xl font-bold uppercase tracking-wider
+            px-6 py-2 xl:px-8 xl:py-3 2xl:px-10 2xl:py-4 rounded-lg text-sm xl:text-base 2xl:text-lg font-bold uppercase tracking-wider
             transition-all duration-200
             ${
               disabled || spinning
@@ -222,14 +222,14 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
         </button>
 
         {showAutoSpin && onAutoSpinChange && (
-          <label className="flex items-center gap-2 px-4 py-3 bg-surface rounded-lg cursor-pointer hover:bg-surface-light transition-colors">
+          <label className="flex items-center gap-2 px-4 py-2 xl:px-5 xl:py-3 2xl:px-6 2xl:py-4 bg-surface rounded-lg cursor-pointer hover:bg-surface-light transition-colors">
             <input
               type="checkbox"
               checked={autoSpinEnabled}
               onChange={(e) => onAutoSpinChange(e.target.checked)}
-              className="cursor-pointer accent-accent w-4 h-4"
+              className="cursor-pointer accent-accent w-3.5 h-3.5 xl:w-4 xl:h-4"
             />
-            <span className="text-sm font-medium text-text-muted whitespace-nowrap">
+            <span className="text-xs xl:text-sm 2xl:text-base font-medium text-text-muted whitespace-nowrap">
               Auto-spin (2s)
             </span>
           </label>

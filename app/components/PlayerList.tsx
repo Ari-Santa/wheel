@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 export interface Player {
   id: string;
@@ -105,6 +105,22 @@ export default function PlayerList({
   };
 
   const compact = players.length >= 16;
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const playerItemRefs = useRef<(HTMLLIElement | null)[]>([]);
+
+  // Auto-scroll to current player during gameplay
+  useEffect(() => {
+    if (gameActive && currentPlayerIndex >= 0) {
+      const currentPlayerElement = playerItemRefs.current[currentPlayerIndex];
+      if (currentPlayerElement) {
+        currentPlayerElement.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+      }
+    }
+  }, [currentPlayerIndex, gameActive]);
 
   return (
     <div className="bg-surface rounded-xl p-4 xl:p-5 2xl:p-6 w-full">
@@ -226,6 +242,7 @@ export default function PlayerList({
       )}
 
       <div
+        ref={scrollContainerRef}
         className={`overflow-y-auto ${compact ? "max-h-80 xl:max-h-[500px] 2xl:max-h-[600px]" : "max-h-96 xl:max-h-[540px] 2xl:max-h-[650px]"}`}
         style={{ scrollbarGutter: "stable" }}
       >
@@ -236,6 +253,9 @@ export default function PlayerList({
             {players.map((player, index) => (
               <li
                 key={player.id}
+                ref={(el) => {
+                  playerItemRefs.current[index] = el;
+                }}
                 className={`
                   flex items-center justify-between rounded-lg transition-all duration-200
                   ${compact ? "px-2 py-1 text-sm xl:text-base 2xl:text-lg" : "px-3 py-2 text-sm xl:text-base 2xl:text-lg"}

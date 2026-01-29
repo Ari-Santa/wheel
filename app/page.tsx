@@ -718,7 +718,7 @@ export default function Home() {
         </div>
       )}
 
-      <main className="min-h-screen bg-background py-4 px-1">
+      <main className="min-h-screen bg-background py-4 px-4">
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
         {/* Left Panel: Players */}
@@ -806,7 +806,7 @@ export default function Home() {
                 No spins yet
               </p>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+              <div className="space-y-2 max-h-96 xl:max-h-[540px] 2xl:max-h-[650px] overflow-y-auto">
                 {results.map((r, i) => (
                   <div
                     key={i}
