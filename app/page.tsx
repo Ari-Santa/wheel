@@ -64,7 +64,7 @@ function createPlayer(name: string): Player {
  */
 function formatResultDetail(detail: string): React.ReactNode {
   // Battle Royale specific formatting
-  if (detail.includes("eliminated") || detail.includes("survived") || detail.includes("revived")) {
+  if (detail.includes("eliminated") || detail.includes("survive") || detail.includes("revived")) {
 
     // Double Elimination - highlight both players
     if (detail.includes("Double elimination!")) {
@@ -97,10 +97,10 @@ function formatResultDetail(detail: string): React.ReactNode {
 
     // Sudden Death
     if (detail.includes("Sudden Death!")) {
-      if (detail.includes("survived")) {
+      if (detail.includes("survived!")) {
         return <span className="text-green-400">🍀 Survived Sudden Death!</span>;
       } else {
-        return <span className="text-danger">⚡ Died in Sudden Death</span>;
+        return <span className="text-red-500">☠️ Died in Sudden Death</span>;
       }
     }
 
