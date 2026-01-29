@@ -229,6 +229,11 @@ export default function Home() {
   }, [mode, players.length]);
 
   const resetGame = useCallback(() => {
+    // Cancel any in-progress spin
+    if (wheelRef.current) {
+      wheelRef.current.cancelSpin();
+    }
+    // Clear auto-spin timer
     if (autoSpinTimerRef.current) {
       clearTimeout(autoSpinTimerRef.current);
       autoSpinTimerRef.current = null;
@@ -634,6 +639,11 @@ export default function Home() {
           }}
           onNewGame={() => {
             // Return to setup (reset everything including target)
+            // Cancel any in-progress spin
+            if (wheelRef.current) {
+              wheelRef.current.cancelSpin();
+            }
+            // Clear auto-spin timer
             if (autoSpinTimerRef.current) {
               clearTimeout(autoSpinTimerRef.current);
               autoSpinTimerRef.current = null;

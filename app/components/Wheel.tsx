@@ -21,6 +21,7 @@ interface WheelProps {
 
 export interface WheelRef {
   spin: () => void;
+  cancelSpin: () => void;
 }
 
 const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
@@ -38,6 +39,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   const [rotation, setRotation] = useState(0);
   const currentRotationRef = useRef(0);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const segmentAngle = 360 / segments.length;
 
@@ -126,6 +128,12 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   const spin = useCallback(() => {
     if (disabled || spinning) return;
 
+    // Clear any existing spin timeout
+    if (spinTimeoutRef.current) {
+      clearTimeout(spinTimeoutRef.current);
+      spinTimeoutRef.current = null;
+    }
+
     onSpinStart();
 
     // Random 3-6 full rotations + random final position
@@ -147,14 +155,32 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
     const segmentIndex = Math.floor(pointerAngle / segmentAngle) % segments.length;
 
     // Fire result after animation completes
-    setTimeout(() => {
+    spinTimeoutRef.current = setTimeout(() => {
+      spinTimeoutRef.current = null;
       onResult(segments[segmentIndex], segmentIndex);
     }, 4100);
   }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle]);
 
+  const cancelSpin = useCallback(() => {
+    if (spinTimeoutRef.current) {
+      clearTimeout(spinTimeoutRef.current);
+      spinTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current) {
+        clearTimeout(spinTimeoutRef.current);
+      }
+    };
+  }, []);
+
   useImperativeHandle(ref, () => ({
     spin,
-  }), [spin]);
+    cancelSpin,
+  }), [spin, cancelSpin]);
 
   return (
     <div className="flex flex-col items-center gap-4">
