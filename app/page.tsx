@@ -4,7 +4,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
 import BattleRoyaleResults from "./components/BattleRoyaleResults";
-import SplashScreen from "./components/SplashScreen";
+import SetupSplash from "./components/SetupSplash";
+import ResultsSplash from "./components/ResultsSplash";
 
 type GameMode = "normal" | "battle-royale";
 type GamePhase = "setup" | "playing" | "finished";
@@ -165,7 +166,7 @@ export default function Home() {
   const [round, setRound] = useState(1);
   const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
-  const [showSplash, setShowSplash] = useState(true);
+  const [targetPoints, setTargetPoints] = useState(500);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
   const wheelSize = useResponsiveWheelSize();
@@ -286,11 +287,14 @@ export default function Home() {
           break;
       }
 
-      setPlayers((prev) =>
-        prev.map((p) =>
-          p.id === currentPlayer.id ? { ...p, score: p.score + scoreChange } : p,
-        ),
+      // Calculate new score
+      const newScore = currentPlayer.score + scoreChange;
+
+      // Update player scores
+      const updatedPlayers = players.map((p) =>
+        p.id === currentPlayer.id ? { ...p, score: newScore } : p
       );
+      setPlayers(updatedPlayers);
 
       const result: GameResult = {
         playerName: currentPlayer.name,
@@ -300,17 +304,39 @@ export default function Home() {
       setLastResult(result);
       setResults((prev) => [result, ...prev].slice(0, 20));
 
-      // Move to next player unless "Spin Again"
-      if (segment.label !== "Spin Again") {
-        const playerIdx = players.findIndex((p) => p.id === currentPlayer.id);
-        const nextIdx = getNextActivePlayerIndex(playerIdx, players);
-        setCurrentPlayerIndex(nextIdx);
+      // Check if player reached target
+      let gameEnded = false;
+      if (newScore >= targetPoints) {
+        gameEnded = true;
+
+        // Mark player as winner
+        const playersWithWinner = updatedPlayers.map((p) =>
+          p.id === currentPlayer.id ? { ...p, status: "winner" as const } : p
+        );
+        setPlayers(playersWithWinner);
+
+        // Show victory message
+        setLastResult({
+          playerName: currentPlayer.name,
+          segment: "WINNER!",
+          detail: `${currentPlayer.name} reached ${targetPoints} points and wins the game!`,
+        });
+
+        // Transition to finished phase
+        setPhase("finished");
+      } else {
+        // Move to next player unless "Spin Again"
+        if (segment.label !== "Spin Again") {
+          const playerIdx = players.findIndex((p) => p.id === currentPlayer.id);
+          const nextIdx = getNextActivePlayerIndex(playerIdx, updatedPlayers);
+          setCurrentPlayerIndex(nextIdx);
+        }
       }
 
       setSpinning(false);
 
-      // Trigger autospin after result is displayed
-      if (autoSpinEnabled && phase === "playing") {
+      // Trigger autospin after result is displayed (only if game not ended)
+      if (autoSpinEnabled && phase === "playing" && !gameEnded) {
         if (autoSpinTimerRef.current) {
           clearTimeout(autoSpinTimerRef.current);
         }
@@ -319,7 +345,7 @@ export default function Home() {
         }, 2000);
       }
     },
-    [activePlayers, currentPlayerIndex, players, getNextActivePlayerIndex, autoSpinEnabled, phase],
+    [activePlayers, currentPlayerIndex, players, getNextActivePlayerIndex, autoSpinEnabled, phase, targetPoints],
   );
 
   const calculateRankings = useCallback((playerList: Player[], totalRounds: number): BattleRoyaleRanking[] => {
@@ -552,8 +578,68 @@ export default function Home() {
 
   return (
     <>
-      {/* Splash Screen */}
-      {showSplash && <SplashScreen onDismiss={() => setShowSplash(false)} />}
+      {/* Setup Splash Screen */}
+      {phase === "setup" && (
+        <SetupSplash
+          mode={mode}
+          players={players}
+          targetPoints={targetPoints}
+          onModeChange={(newMode) => {
+            setMode(newMode);
+            setPlayers([]);
+          }}
+          onAddPlayer={addPlayer}
+          onRemovePlayer={removePlayer}
+          onTargetPointsChange={setTargetPoints}
+          onStartGame={startGame}
+        />
+      )}
+
+      {/* Results Splash Screen */}
+      {phase === "finished" && (
+        <ResultsSplash
+          mode={mode}
+          players={players}
+          finalRankings={finalRankings}
+          totalRounds={round}
+          targetPoints={mode === "normal" ? targetPoints : undefined}
+          onPlayAgain={() => {
+            // Reset scores and status, keep players and mode AND TARGET
+            setPhase("playing");
+            setCurrentPlayerIndex(0);
+            setResults([]);
+            setLastResult(null);
+            setRound(1);
+            setFinalRankings([]);
+            setPlayers((prev) => prev.map((p) => ({
+              ...p,
+              status: "active" as const,
+              score: 0,
+              eliminationData: undefined,
+              revivedCount: 0,
+            })));
+            // targetPoints stays the same for Play Again
+          }}
+          onNewGame={() => {
+            // Return to setup (reset everything including target)
+            if (autoSpinTimerRef.current) {
+              clearTimeout(autoSpinTimerRef.current);
+              autoSpinTimerRef.current = null;
+            }
+            setAutoSpinEnabled(false);
+            setPhase("setup");
+            setSpinning(false);
+            setResults([]);
+            setLastResult(null);
+            setCurrentPlayerIndex(0);
+            setRound(1);
+            setFinalRankings([]);
+            setPlayers([]);
+            setMode("normal");
+            setTargetPoints(500);  // Reset to default
+          }}
+        />
+      )}
 
       {/* Battle Result Overlay - Fixed at top */}
       {lastResult && !spinning && (
@@ -585,80 +671,31 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
         {/* Left Panel: Players */}
         <div className="lg:w-72 xl:w-80 2xl:w-96 shrink-0">
-          {/* Mode Selector - Only during setup */}
-          {phase === "setup" && (
-            <div className="bg-surface rounded-xl p-3 mb-4">
-              <h3 className="text-sm font-semibold text-text-muted mb-2 uppercase tracking-wide">
-                Game Mode
-              </h3>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => {
-                    setMode("normal");
-                    setPlayers([]);
-                  }}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    mode === "normal"
-                      ? "bg-accent text-white"
-                      : "bg-surface-light text-text-muted hover:bg-surface-light/70"
-                  }`}
-                >
-                  Normal Mode
-                </button>
-                <button
-                  onClick={() => {
-                    setMode("battle-royale");
-                    setPlayers([]);
-                  }}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                    mode === "battle-royale"
-                      ? "bg-accent text-white"
-                      : "bg-surface-light text-text-muted hover:bg-surface-light/70"
-                  }`}
-                >
-                  Battle Royale
-                </button>
+          {/* Only show PlayerList during gameplay, not setup */}
+          {phase !== "setup" && (
+            <>
+              <PlayerList
+                players={players}
+                currentPlayerIndex={currentPlayerIndex}
+                onAddPlayer={addPlayer}
+                onRemovePlayer={removePlayer}
+                gameActive={true}
+                mode={mode}
+              />
+
+              {/* Game Controls */}
+              <div className="mt-4 space-y-2">
+                {(phase === "playing" || phase === "finished") && (
+                  <button
+                    onClick={resetGame}
+                    className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-surface-light hover:bg-gray-500 text-white transition-all"
+                  >
+                    Reset Game
+                  </button>
+                )}
               </div>
-            </div>
+            </>
           )}
-
-          <PlayerList
-            players={players}
-            currentPlayerIndex={currentPlayerIndex}
-            onAddPlayer={addPlayer}
-            onRemovePlayer={removePlayer}
-            gameActive={phase !== "setup"}
-            mode={mode}
-          />
-
-          {/* Game Controls */}
-          <div className="mt-4 space-y-2">
-            {phase === "setup" && (
-              <button
-                onClick={startGame}
-                disabled={
-                  (mode === "normal" && players.length === 0) ||
-                  (mode === "battle-royale" && players.length < 2)
-                }
-                className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all ${
-                  (mode === "normal" && players.length === 0) ||
-                  (mode === "battle-royale" && players.length < 2)
-                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                    : "bg-accent hover:bg-accent-hover text-white"
-                }`}
-              >
-                {mode === "battle-royale" ? "Start Battle Royale" : "Start Game"}
-              </button>
-            )}
-            {(phase === "playing" || phase === "finished") && (
-              <button
-                onClick={resetGame}
-                className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-surface-light hover:bg-gray-500 text-white transition-all"
-              >
-                Reset Game
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Center: Wheel */}
@@ -668,36 +705,14 @@ export default function Home() {
             <div className="mb-2 bg-surface rounded-xl px-5 py-2 text-center fade-in">
               <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">Current Player</span>
               <p className="text-lg xl:text-xl 2xl:text-2xl font-bold text-accent">{currentPlayerName}</p>
-              {mode === "battle-royale" && (
+              {mode === "battle-royale" ? (
                 <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">
                   Round {round} &middot; {activePlayers.length} remaining
                 </span>
-              )}
-            </div>
-          )}
-
-          {phase === "finished" && mode === "battle-royale" && (
-            <div className="mb-4 w-full max-w-5xl">
-              <BattleRoyaleResults
-                rankings={finalRankings}
-                totalPlayers={players.length}
-                totalRounds={round}
-                compact={false}
-              />
-            </div>
-          )}
-
-          {phase === "finished" && mode === "normal" && (
-            <div className="mb-2 bg-accent/20 border border-accent rounded-xl px-8 py-4 text-center fade-in">
-              <p className="text-2xl font-bold text-accent">Game Over!</p>
-              {players.find((p) => p.status === "winner") && (
-                <p className="text-lg mt-1">
-                  &#9733;{" "}
-                  <span className="text-yellow-400 font-bold">
-                    {players.find((p) => p.status === "winner")?.name}
-                  </span>{" "}
-                  wins! &#9733;
-                </p>
+              ) : (
+                <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">
+                  Target: {targetPoints} points
+                </span>
               )}
             </div>
           )}
