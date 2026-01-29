@@ -155,7 +155,20 @@ function useResponsiveWheelSize() {
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<GameMode>("normal");
+  const [mode, setMode] = useState<GameMode>(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("wheeloffortune_game_mode");
+        if (saved === "normal" || saved === "battle-royale") {
+          return saved;
+        }
+      } catch (error) {
+        console.error("Failed to load game mode preference:", error);
+      }
+    }
+    return "normal"; // Default to normal mode
+  });
   const [phase, setPhase] = useState<GamePhase>("setup");
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -238,7 +251,7 @@ export default function Home() {
       clearTimeout(autoSpinTimerRef.current);
       autoSpinTimerRef.current = null;
     }
-    setAutoSpinEnabled(false);
+    // Keep auto-spin preference as-is (don't reset)
     setPhase("setup");
     setSpinning(false);
     setResults([]);
@@ -604,6 +617,12 @@ export default function Home() {
           onModeChange={(newMode) => {
             setMode(newMode);
             setPlayers([]);
+            // Save mode preference to localStorage
+            try {
+              localStorage.setItem("wheeloffortune_game_mode", newMode);
+            } catch (error) {
+              console.error("Failed to save game mode preference:", error);
+            }
           }}
           onAddPlayer={addPlayer}
           onRemovePlayer={removePlayer}
@@ -648,7 +667,7 @@ export default function Home() {
               clearTimeout(autoSpinTimerRef.current);
               autoSpinTimerRef.current = null;
             }
-            setAutoSpinEnabled(false);
+            // Keep auto-spin preference as-is (don't reset)
             setPhase("setup");
             setSpinning(false);
             setResults([]);
@@ -657,7 +676,18 @@ export default function Home() {
             setRound(1);
             setFinalRankings([]);
             setPlayers([]);
-            setMode("normal");
+            // Load mode from localStorage or default to normal
+            try {
+              const savedMode = localStorage.getItem("wheeloffortune_game_mode");
+              if (savedMode === "normal" || savedMode === "battle-royale") {
+                setMode(savedMode);
+              } else {
+                setMode("normal");
+              }
+            } catch (error) {
+              console.error("Failed to load game mode preference:", error);
+              setMode("normal");
+            }
             setTargetPoints(500);  // Reset to default
           }}
         />
