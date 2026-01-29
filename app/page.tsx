@@ -163,7 +163,20 @@ export default function Home() {
   const [results, setResults] = useState<GameResult[]>([]);
   const [lastResult, setLastResult] = useState<GameResult | null>(null);
   const [round, setRound] = useState(1);
-  const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
+  const [autoSpinEnabled, setAutoSpinEnabled] = useState(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("wheeloffortune_auto_spin");
+        if (saved !== null) {
+          return saved === "true";
+        }
+      } catch (error) {
+        console.error("Failed to load auto-spin preference:", error);
+      }
+    }
+    return true; // Default to enabled
+  });
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
   const [targetPoints, setTargetPoints] = useState(500);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -727,6 +740,13 @@ export default function Home() {
             autoSpinEnabled={autoSpinEnabled}
             onAutoSpinChange={(enabled) => {
               setAutoSpinEnabled(enabled);
+              // Save to localStorage
+              try {
+                localStorage.setItem("wheeloffortune_auto_spin", enabled.toString());
+              } catch (error) {
+                console.error("Failed to save auto-spin preference:", error);
+              }
+              // Clear timer if disabling
               if (!enabled && autoSpinTimerRef.current) {
                 clearTimeout(autoSpinTimerRef.current);
                 autoSpinTimerRef.current = null;
