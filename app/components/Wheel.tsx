@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback, useEffect, useState, forwardRef, useImperativeHandle } from "react";
+import { useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
 
 export interface WheelSegment {
   label: string;
@@ -24,6 +24,20 @@ export interface WheelRef {
   cancelSpin: () => void;
 }
 
+/**
+ * Extract the current rotation angle (0-360) from an element's computed transform matrix.
+ */
+function getComputedRotation(el: HTMLElement): number {
+  const style = getComputedStyle(el);
+  const transform = style.transform;
+  if (!transform || transform === "none") return 0;
+
+  const matrix = new DOMMatrix(transform);
+  const radians = Math.atan2(matrix.b, matrix.a);
+  const degrees = radians * (180 / Math.PI);
+  return ((degrees % 360) + 360) % 360;
+}
+
 const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   segments,
   onResult,
@@ -36,12 +50,23 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   showAutoSpin = false,
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [rotation, setRotation] = useState(0);
   const currentRotationRef = useRef(0);
   const wheelRef = useRef<HTMLDivElement>(null);
+  const pointerRef = useRef<HTMLDivElement>(null);
   const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Boundary detection RAF loop
+  const observerRef = useRef<number | null>(null);
+  const previousSegmentRef = useRef<number>(0);
+
   const segmentAngle = 360 / segments.length;
+
+  // Store mutable values in refs for the observer loop
+  const segmentsRef = useRef(segments);
+  const segmentAngleRef = useRef(segmentAngle);
+
+  useEffect(() => { segmentsRef.current = segments; }, [segments]);
+  useEffect(() => { segmentAngleRef.current = segmentAngle; }, [segmentAngle]);
 
   const drawWheel = useCallback(() => {
     const canvas = canvasRef.current;
@@ -91,7 +116,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 
       // Word wrap for long labels
       const words = segment.label.split(" ");
-      const lineSpacing = Math.max(10, size / 45); // Dynamic line spacing
+      const lineSpacing = Math.max(10, size / 45);
       if (words.length > 1 && segment.label.length > 10) {
         const mid = Math.ceil(words.length / 2);
         const line1 = words.slice(0, mid).join(" ");
@@ -125,10 +150,55 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
     drawWheel();
   }, [drawWheel]);
 
+  /**
+   * RAF observer loop: reads the computed transform during the CSS transition
+   * to detect segment boundary crossings. Does NOT write any styles — the CSS
+   * transition handles animation on the compositor thread.
+   */
+  const startObserver = useCallback(() => {
+    const wheel = wheelRef.current;
+    if (!wheel) return;
+
+    const observe = () => {
+      const currentAngle = getComputedRotation(wheel);
+      const sa = segmentAngleRef.current;
+      const numSegs = segmentsRef.current.length;
+
+      // Which segment is under the pointer
+      const pointerAngle = ((360 - currentAngle) + 360) % 360;
+      const currentSegment = Math.floor(pointerAngle / sa) % numSegs;
+
+      if (currentSegment !== previousSegmentRef.current) {
+        previousSegmentRef.current = currentSegment;
+
+        // Pointer bounce via CSS animation class
+        const pointer = pointerRef.current;
+        if (pointer) {
+          pointer.classList.remove("bouncing");
+          // rAF to batch the remove/add so the browser sees the class change
+          requestAnimationFrame(() => {
+            pointer.classList.add("bouncing");
+          });
+        }
+      }
+
+      observerRef.current = requestAnimationFrame(observe);
+    };
+
+    observerRef.current = requestAnimationFrame(observe);
+  }, []);
+
+  const stopObserver = useCallback(() => {
+    if (observerRef.current !== null) {
+      cancelAnimationFrame(observerRef.current);
+      observerRef.current = null;
+    }
+  }, []);
+
   const spin = useCallback(() => {
     if (disabled || spinning) return;
 
-    // Clear any existing spin timeout
+    // Clear any pending result timeout
     if (spinTimeoutRef.current) {
       clearTimeout(spinTimeoutRef.current);
       spinTimeoutRef.current = null;
@@ -142,40 +212,53 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
     const totalRotation = fullRotations * 360 + randomAngle;
     const newRotation = currentRotationRef.current + totalRotation;
 
-    setRotation(newRotation);
-    currentRotationRef.current = newRotation;
-
-    // Calculate which segment the pointer lands on
-    // Pointer is at top (0 degrees). Wheel rotates clockwise.
-    // Final position = newRotation mod 360
+    // Calculate result segment ahead of time (same logic as before)
     const finalAngle = newRotation % 360;
-    // The pointer is at top, so segment 0 starts at top.
-    // As wheel rotates clockwise by finalAngle, the segment at the pointer is:
     const pointerAngle = (360 - finalAngle + 360) % 360;
     const segmentIndex = Math.floor(pointerAngle / segmentAngle) % segments.length;
 
-    // Fire result after animation completes
+    // Initialize observer state
+    const wheel = wheelRef.current;
+    if (wheel) {
+      const currentAngle = getComputedRotation(wheel);
+      const pa = ((360 - currentAngle) + 360) % 360;
+      previousSegmentRef.current = Math.floor(pa / segmentAngle) % segments.length;
+    }
+
+    // Set the CSS transition target — browser handles smooth animation
+    if (wheel) {
+      wheel.style.transform = `rotate(${newRotation}deg)`;
+    }
+    currentRotationRef.current = newRotation;
+
+    // Start boundary detection observer
+    startObserver();
+
+    // Fire result after transition completes (4s transition + small buffer)
     spinTimeoutRef.current = setTimeout(() => {
       spinTimeoutRef.current = null;
+      stopObserver();
       onResult(segments[segmentIndex], segmentIndex);
     }, 4100);
-  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle]);
+  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, startObserver, stopObserver]);
 
   const cancelSpin = useCallback(() => {
+    stopObserver();
     if (spinTimeoutRef.current) {
       clearTimeout(spinTimeoutRef.current);
       spinTimeoutRef.current = null;
     }
-  }, []);
+  }, [stopObserver]);
 
-  // Cleanup timeout on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
+      stopObserver();
       if (spinTimeoutRef.current) {
         clearTimeout(spinTimeoutRef.current);
       }
     };
-  }, []);
+  }, [stopObserver]);
 
   useImperativeHandle(ref, () => ({
     spin,
@@ -185,14 +268,14 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="wheel-container" style={{ width: size, height: size }}>
-        <div className="wheel-pointer" />
+        <div ref={pointerRef} className="wheel-pointer" />
         <div
           ref={wheelRef}
           className="wheel"
           style={{
             width: size,
             height: size,
-            transform: `rotate(${rotation}deg)`,
+            transform: `rotate(${currentRotationRef.current}deg)`,
           }}
         >
           <canvas

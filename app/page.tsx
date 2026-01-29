@@ -155,20 +155,8 @@ function useResponsiveWheelSize() {
 }
 
 export default function Home() {
-  const [mode, setMode] = useState<GameMode>(() => {
-    // Initialize from localStorage if available
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("wheeloffortune_game_mode");
-        if (saved === "normal" || saved === "battle-royale") {
-          return saved;
-        }
-      } catch (error) {
-        console.error("Failed to load game mode preference:", error);
-      }
-    }
-    return "normal"; // Default to normal mode
-  });
+  // Initialize with fixed defaults to avoid hydration mismatch
+  const [mode, setMode] = useState<GameMode>("normal");
   const [phase, setPhase] = useState<GamePhase>("setup");
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -176,20 +164,7 @@ export default function Home() {
   const [results, setResults] = useState<GameResult[]>([]);
   const [lastResult, setLastResult] = useState<GameResult | null>(null);
   const [round, setRound] = useState(1);
-  const [autoSpinEnabled, setAutoSpinEnabled] = useState(() => {
-    // Initialize from localStorage if available
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("wheeloffortune_auto_spin");
-        if (saved !== null) {
-          return saved === "true";
-        }
-      } catch (error) {
-        console.error("Failed to load auto-spin preference:", error);
-      }
-    }
-    return true; // Default to enabled
-  });
+  const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
   const [targetPoints, setTargetPoints] = useState(500);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -198,6 +173,23 @@ export default function Home() {
 
   const segments = mode === "normal" ? NORMAL_SEGMENTS : BATTLE_SEGMENTS;
   const activePlayers = players.filter((p) => p.status === "active");
+
+  // Load preferences from localStorage after mount (client-side only)
+  useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem("wheeloffortune_game_mode");
+      if (savedMode === "normal" || savedMode === "battle-royale") {
+        setMode(savedMode);
+      }
+
+      const savedAutoSpin = localStorage.getItem("wheeloffortune_auto_spin");
+      if (savedAutoSpin !== null) {
+        setAutoSpinEnabled(savedAutoSpin === "true");
+      }
+    } catch (error) {
+      console.error("Failed to load preferences:", error);
+    }
+  }, []);
 
   // Cleanup autospin timer on unmount
   useEffect(() => {
