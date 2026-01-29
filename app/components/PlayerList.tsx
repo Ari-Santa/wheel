@@ -111,13 +111,39 @@ export default function PlayerList({
 
   // Auto-scroll to current player during gameplay
   useEffect(() => {
-    if (gameActive && currentPlayerIndex >= 0) {
+    if (gameActive && currentPlayerIndex >= 0 && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
       const currentPlayerElement = playerItemRefs.current[currentPlayerIndex];
-      if (currentPlayerElement) {
-        currentPlayerElement.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest"
-        });
+
+      if (currentPlayerElement && container) {
+        const containerRect = container.getBoundingClientRect();
+        const elementRect = currentPlayerElement.getBoundingClientRect();
+
+        // Check if element is out of view
+        const isAboveView = elementRect.top < containerRect.top;
+        const isBelowView = elementRect.bottom > containerRect.bottom;
+
+        if (isAboveView || isBelowView) {
+          // Scroll element into view within container only
+          const scrollTop = container.scrollTop;
+          const elementTop = currentPlayerElement.offsetTop;
+          const containerHeight = container.clientHeight;
+          const elementHeight = currentPlayerElement.offsetHeight;
+
+          let targetScroll;
+          if (isAboveView) {
+            // Scroll to top of element
+            targetScroll = elementTop;
+          } else {
+            // Scroll to bottom of element
+            targetScroll = elementTop - containerHeight + elementHeight;
+          }
+
+          container.scrollTo({
+            top: targetScroll,
+            behavior: "smooth"
+          });
+        }
       }
     }
   }, [currentPlayerIndex, gameActive]);

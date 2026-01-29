@@ -687,8 +687,8 @@ export default function Home() {
 
       {/* Battle Result Overlay - Fixed at top */}
       {lastResult && !spinning && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
-          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md xl:max-w-lg 2xl:max-w-xl mx-4">
+        <div className="fixed top-4 left-0 right-0 z-50 flex justify-center animate-slide-down pointer-events-none">
+          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md xl:max-w-lg 2xl:max-w-xl mx-4 pointer-events-auto">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
                 <div className="text-sm xl:text-base 2xl:text-lg font-bold text-accent mb-1 uppercase tracking-wide">
@@ -710,7 +710,7 @@ export default function Home() {
         </div>
       )}
 
-      <main className="min-h-screen bg-background py-4 px-4">
+      <main className="h-screen bg-background py-4 px-4 overflow-hidden">
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
         {/* Left Panel: Players */}
