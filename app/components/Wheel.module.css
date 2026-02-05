@@ -71,101 +71,71 @@
 }
 
 /* Retina / High-DPI Display Scaling (2x pixel density - Apple Retina, etc.) */
+/* Subtle scaling: ~5-8% larger for crisp text on high-DPI */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
   .container {
-    --wheel-size: 320px;
+    --wheel-size: 294px;
   }
 
   @media (min-width: 640px) {
     .container {
-      --wheel-size: 420px;
+      --wheel-size: 392px;
     }
   }
 
   @media (min-width: 1024px) {
     .container {
-      --wheel-size: 550px;
+      --wheel-size: 518px;
     }
   }
 
   @media (min-width: 1280px) {
     .container {
-      --wheel-size: 660px;
+      --wheel-size: 622px;
     }
   }
 
   @media (min-width: 1536px) {
     .container {
-      --wheel-size: 770px;
+      --wheel-size: 728px;
     }
   }
 
   /* 1080p height-constrained screens */
   @media (min-width: 1024px) and (max-height: 999px) {
     .container {
-      --wheel-size: 615px;
+      --wheel-size: 573px;
     }
   }
 
   @media (min-width: 1280px) and (max-height: 999px) {
     .container {
-      --wheel-size: 660px;
+      --wheel-size: 622px;
     }
   }
 
   @media (min-width: 1536px) and (max-height: 999px) {
     .container {
-      --wheel-size: 704px;
+      --wheel-size: 661px;
     }
   }
 
   /* 1440p and larger screens */
   @media (min-width: 1024px) and (min-height: 1000px) {
     .container {
-      --wheel-size: 935px;
+      --wheel-size: 876px;
     }
   }
 
   @media (min-width: 1280px) and (min-height: 1000px) {
     .container {
-      --wheel-size: 1045px;
+      --wheel-size: 979px;
     }
   }
 
   @media (min-width: 1536px) and (min-height: 1000px) {
     .container {
-      --wheel-size: 1210px;
-    }
-  }
-}
-
-/* Ultra-High-DPI Display Scaling (3x pixel density) */
-@media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
-  .container {
-    --wheel-size: 360px;
-  }
-
-  @media (min-width: 640px) {
-    .container {
-      --wheel-size: 480px;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .container {
-      --wheel-size: 630px;
-    }
-  }
-
-  @media (min-width: 1280px) {
-    .container {
-      --wheel-size: 750px;
-    }
-  }
-
-  @media (min-width: 1536px) {
-    .container {
-      --wheel-size: 880px;
+      --wheel-size: 1133px;
     }
   }
 }
