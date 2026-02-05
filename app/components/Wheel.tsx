@@ -231,7 +231,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       tweenRef.current = gsap.to(wheel, {
         rotation: newRotation,
         duration: 4,
-        ease: "expo.out",
+        ease: "power2.inOut",
         onUpdate: () => {
           const currentRot = gsap.getProperty(wheel, "rotation") as number;
           const sa = segmentAngleRef.current;
