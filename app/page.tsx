@@ -746,7 +746,7 @@ export default function Home() {
             }}
             showAutoSpin={phase === "playing"}
             riggedEnabled={riggedEnabled}
-            onRiggedChange={setRiggedEnabled}
+            onRiggedChange={players.some(p => p.name.toLowerCase() === "ari santa") ? setRiggedEnabled : undefined}
             currentPlayerName={currentPlayerName}
             riggedPlayerName="Ari Santa"
           />
