@@ -1,7 +1,11 @@
 "use client";
 
 import { useRef, useCallback, useEffect, forwardRef, useImperativeHandle, useState } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import styles from "./Wheel.module.css";
+
+gsap.registerPlugin(useGSAP);
 
 export interface WheelSegment {
   label: string;
@@ -28,20 +32,6 @@ export interface WheelRef {
   cancelSpin: () => void;
 }
 
-/**
- * Extract the current rotation angle (0-360) from an element's computed transform matrix.
- */
-function getComputedRotation(el: HTMLElement): number {
-  const style = getComputedStyle(el);
-  const transform = style.transform;
-  if (!transform || transform === "none") return 0;
-
-  const matrix = new DOMMatrix(transform);
-  const radians = Math.atan2(matrix.b, matrix.a);
-  const degrees = radians * (180 / Math.PI);
-  return ((degrees % 360) + 360) % 360;
-}
-
 const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   segments,
   onResult,
@@ -62,11 +52,10 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   const wheelRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const tweenRef = useRef<gsap.core.Tween | null>(null);
   const [size, setSize] = useState(380);
 
-  // Boundary detection RAF loop
-  const observerRef = useRef<number | null>(null);
+  // Boundary detection state
   const previousSegmentRef = useRef<number>(0);
 
   const segmentAngle = 360 / segments.length;
@@ -177,58 +166,13 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
     drawWheel();
   }, [drawWheel]);
 
-  /**
-   * RAF observer loop: reads the computed transform during the CSS transition
-   * to detect segment boundary crossings. Does NOT write any styles — the CSS
-   * transition handles animation on the compositor thread.
-   */
-  const startObserver = useCallback(() => {
-    const wheel = wheelRef.current;
-    if (!wheel) return;
-
-    const observe = () => {
-      const currentAngle = getComputedRotation(wheel);
-      const sa = segmentAngleRef.current;
-      const numSegs = segmentsRef.current.length;
-
-      // Which segment is under the pointer
-      const pointerAngle = ((360 - currentAngle) + 360) % 360;
-      const currentSegment = Math.floor(pointerAngle / sa) % numSegs;
-
-      if (currentSegment !== previousSegmentRef.current) {
-        previousSegmentRef.current = currentSegment;
-
-        // Pointer bounce via CSS animation class
-        const pointer = pointerRef.current;
-        if (pointer) {
-          pointer.classList.remove("bouncing");
-          // rAF to batch the remove/add so the browser sees the class change
-          requestAnimationFrame(() => {
-            pointer.classList.add("bouncing");
-          });
-        }
-      }
-
-      observerRef.current = requestAnimationFrame(observe);
-    };
-
-    observerRef.current = requestAnimationFrame(observe);
-  }, []);
-
-  const stopObserver = useCallback(() => {
-    if (observerRef.current !== null) {
-      cancelAnimationFrame(observerRef.current);
-      observerRef.current = null;
-    }
-  }, []);
-
   const spin = useCallback(() => {
     if (disabled || spinning) return;
 
-    // Clear any pending result timeout
-    if (spinTimeoutRef.current) {
-      clearTimeout(spinTimeoutRef.current);
-      spinTimeoutRef.current = null;
+    // Kill any existing tween
+    if (tweenRef.current) {
+      tweenRef.current.kill();
+      tweenRef.current = null;
     }
 
     onSpinStart();
@@ -257,80 +201,83 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       const targetAngle = (360 - targetSegmentCenter + 360) % 360;
 
       // Add full rotations for effect
-      const fullRotations = 3 + Math.random() * 3;
+      const fullRotations = 5 + Math.random() * 4;
       newRotation = currentRotationRef.current + fullRotations * 360 + targetAngle - (currentRotationRef.current % 360);
     } else {
       // Normal random spin
-      const fullRotations = 3 + Math.random() * 3;
+      const fullRotations = 5 + Math.random() * 4;
       const randomAngle = Math.random() * 360;
       const totalRotation = fullRotations * 360 + randomAngle;
-      let candidateRotation = currentRotationRef.current + totalRotation;
+      const candidateRotation = currentRotationRef.current + totalRotation;
 
       // Calculate where the pointer would land
       const finalAngle = candidateRotation % 360;
       const pointerAngle = (360 - finalAngle + 360) % 360;
       segmentIndex = Math.floor(pointerAngle / segmentAngle) % segments.length;
 
-      // Check if we're too close to a segment boundary (dead zone = 15% from each edge)
-      const positionInSegment = (pointerAngle % segmentAngle) / segmentAngle;
-      const deadZone = 0.15;
-
-      if (positionInSegment < deadZone) {
-        // Too close to start of segment - push to 25% into segment
-        const adjustment = (0.25 - positionInSegment) * segmentAngle;
-        candidateRotation -= adjustment; // Subtract because pointerAngle is inverse of rotation
-      } else if (positionInSegment > (1 - deadZone)) {
-        // Too close to end of segment - push to 75% into segment
-        const adjustment = (positionInSegment - 0.75) * segmentAngle;
-        candidateRotation += adjustment;
-      }
-
       newRotation = candidateRotation;
     }
 
-    // Initialize observer state
+    // Initialize previous segment for boundary detection
     const wheel = wheelRef.current;
     if (wheel) {
-      const currentAngle = getComputedRotation(wheel);
-      const pa = ((360 - currentAngle) + 360) % 360;
+      const currentRot = gsap.getProperty(wheel, "rotation") as number;
+      const pa = ((360 - (currentRot % 360)) + 360) % 360;
       previousSegmentRef.current = Math.floor(pa / segmentAngle) % segments.length;
     }
 
-    // Set the CSS transition target — browser handles smooth animation
+    // Animate with GSAP
     if (wheel) {
-      wheel.style.transform = `rotate(${newRotation}deg)`;
+      tweenRef.current = gsap.to(wheel, {
+        rotation: newRotation,
+        duration: 4,
+        ease: "expo.out",
+        onUpdate: () => {
+          const currentRot = gsap.getProperty(wheel, "rotation") as number;
+          const sa = segmentAngleRef.current;
+          const numSegs = segmentsRef.current.length;
+
+          const pa = ((360 - (currentRot % 360)) + 360) % 360;
+          const currentSegment = Math.floor(pa / sa) % numSegs;
+
+          if (currentSegment !== previousSegmentRef.current) {
+            previousSegmentRef.current = currentSegment;
+
+            const pointer = pointerRef.current;
+            if (pointer) {
+              pointer.classList.remove("bouncing");
+              requestAnimationFrame(() => {
+                pointer.classList.add("bouncing");
+              });
+            }
+          }
+        },
+        onComplete: () => {
+          tweenRef.current = null;
+          onResult(segments[segmentIndex], segmentIndex);
+        },
+      });
     }
+
     currentRotationRef.current = newRotation;
     setDisplayRotation(newRotation);
-
-    // Start boundary detection observer
-    startObserver();
-
-    // Fire result after transition completes (4s transition + small buffer)
-    spinTimeoutRef.current = setTimeout(() => {
-      spinTimeoutRef.current = null;
-      stopObserver();
-      onResult(segments[segmentIndex], segmentIndex);
-    }, 4100);
-  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, startObserver, stopObserver, riggedEnabled, currentPlayerName, riggedPlayerName]);
+  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, riggedEnabled, currentPlayerName, riggedPlayerName]);
 
   const cancelSpin = useCallback(() => {
-    stopObserver();
-    if (spinTimeoutRef.current) {
-      clearTimeout(spinTimeoutRef.current);
-      spinTimeoutRef.current = null;
+    if (tweenRef.current) {
+      tweenRef.current.kill();
+      tweenRef.current = null;
     }
-  }, [stopObserver]);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      stopObserver();
-      if (spinTimeoutRef.current) {
-        clearTimeout(spinTimeoutRef.current);
+      if (tweenRef.current) {
+        tweenRef.current.kill();
       }
     };
-  }, [stopObserver]);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     spin,
