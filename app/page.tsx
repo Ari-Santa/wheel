@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, startTransition } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
 import GameSplash from "./components/GameSplash";
@@ -141,6 +141,7 @@ export default function Home() {
   const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
   const [targetPoints, setTargetPoints] = useState(500);
+  const [riggedEnabled, setRiggedEnabled] = useState(false);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
 
@@ -151,14 +152,16 @@ export default function Home() {
   useEffect(() => {
     try {
       const savedMode = localStorage.getItem("wheeloffortune_game_mode");
-      if (savedMode === "normal" || savedMode === "battle-royale") {
-        setMode(savedMode);
-      }
-
       const savedAutoSpin = localStorage.getItem("wheeloffortune_auto_spin");
-      if (savedAutoSpin !== null) {
-        setAutoSpinEnabled(savedAutoSpin === "true");
-      }
+
+      startTransition(() => {
+        if (savedMode === "normal" || savedMode === "battle-royale") {
+          setMode(savedMode);
+        }
+        if (savedAutoSpin !== null) {
+          setAutoSpinEnabled(savedAutoSpin === "true");
+        }
+      });
     } catch (error) {
       console.error("Failed to load preferences:", error);
     }
@@ -742,6 +745,10 @@ export default function Home() {
               }
             }}
             showAutoSpin={phase === "playing"}
+            riggedEnabled={riggedEnabled}
+            onRiggedChange={setRiggedEnabled}
+            currentPlayerName={currentPlayerName}
+            riggedPlayerName="Ari Santa"
           />
 
         </div>

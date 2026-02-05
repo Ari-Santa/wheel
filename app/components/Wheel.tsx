@@ -17,6 +17,10 @@ interface WheelProps {
   autoSpinEnabled?: boolean;
   onAutoSpinChange?: (enabled: boolean) => void;
   showAutoSpin?: boolean;
+  riggedEnabled?: boolean;
+  onRiggedChange?: (enabled: boolean) => void;
+  currentPlayerName?: string | null;
+  riggedPlayerName?: string;
 }
 
 export interface WheelRef {
@@ -47,9 +51,14 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   autoSpinEnabled = false,
   onAutoSpinChange,
   showAutoSpin = false,
+  riggedEnabled = false,
+  onRiggedChange,
+  currentPlayerName,
+  riggedPlayerName = "Ari Santa",
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const currentRotationRef = useRef(0);
+  const [displayRotation, setDisplayRotation] = useState(0);
   const wheelRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -224,16 +233,60 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 
     onSpinStart();
 
-    // Random 3-6 full rotations + random final position
-    const fullRotations = 3 + Math.random() * 3;
-    const randomAngle = Math.random() * 360;
-    const totalRotation = fullRotations * 360 + randomAngle;
-    const newRotation = currentRotationRef.current + totalRotation;
+    // Check if rigged mode should apply
+    const isRiggedSpin = riggedEnabled && currentPlayerName?.toLowerCase() === riggedPlayerName.toLowerCase();
 
-    // Calculate result segment ahead of time (same logic as before)
-    const finalAngle = newRotation % 360;
-    const pointerAngle = (360 - finalAngle + 360) % 360;
-    const segmentIndex = Math.floor(pointerAngle / segmentAngle) % segments.length;
+    let segmentIndex: number;
+    let newRotation: number;
+
+    if (isRiggedSpin) {
+      // Find favorable segments based on labels
+      const favorableLabels = ["Victory", "Lucky! +100", "Double Pts", "Bonus Round", "+50 Points", "Immunity", "Extra Life"];
+      const favorableIndices = segments
+        .map((s, i) => favorableLabels.some(label => s.label.includes(label)) ? i : -1)
+        .filter(i => i !== -1);
+
+      // Pick a random favorable segment (so it's not always the same one)
+      segmentIndex = favorableIndices.length > 0
+        ? favorableIndices[Math.floor(Math.random() * favorableIndices.length)]
+        : 0;
+
+      // Calculate the angle needed to land on this segment
+      // Pointer is at top (0°), segments are clockwise from there
+      const targetSegmentCenter = segmentIndex * segmentAngle + segmentAngle / 2;
+      const targetAngle = (360 - targetSegmentCenter + 360) % 360;
+
+      // Add full rotations for effect
+      const fullRotations = 3 + Math.random() * 3;
+      newRotation = currentRotationRef.current + fullRotations * 360 + targetAngle - (currentRotationRef.current % 360);
+    } else {
+      // Normal random spin
+      const fullRotations = 3 + Math.random() * 3;
+      const randomAngle = Math.random() * 360;
+      const totalRotation = fullRotations * 360 + randomAngle;
+      let candidateRotation = currentRotationRef.current + totalRotation;
+
+      // Calculate where the pointer would land
+      const finalAngle = candidateRotation % 360;
+      const pointerAngle = (360 - finalAngle + 360) % 360;
+      segmentIndex = Math.floor(pointerAngle / segmentAngle) % segments.length;
+
+      // Check if we're too close to a segment boundary (dead zone = 15% from each edge)
+      const positionInSegment = (pointerAngle % segmentAngle) / segmentAngle;
+      const deadZone = 0.15;
+
+      if (positionInSegment < deadZone) {
+        // Too close to start of segment - push to 25% into segment
+        const adjustment = (0.25 - positionInSegment) * segmentAngle;
+        candidateRotation -= adjustment; // Subtract because pointerAngle is inverse of rotation
+      } else if (positionInSegment > (1 - deadZone)) {
+        // Too close to end of segment - push to 75% into segment
+        const adjustment = (positionInSegment - 0.75) * segmentAngle;
+        candidateRotation += adjustment;
+      }
+
+      newRotation = candidateRotation;
+    }
 
     // Initialize observer state
     const wheel = wheelRef.current;
@@ -248,6 +301,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       wheel.style.transform = `rotate(${newRotation}deg)`;
     }
     currentRotationRef.current = newRotation;
+    setDisplayRotation(newRotation);
 
     // Start boundary detection observer
     startObserver();
@@ -258,7 +312,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
       stopObserver();
       onResult(segments[segmentIndex], segmentIndex);
     }, 4100);
-  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, startObserver, stopObserver]);
+  }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, startObserver, stopObserver, riggedEnabled, currentPlayerName, riggedPlayerName]);
 
   const cancelSpin = useCallback(() => {
     stopObserver();
@@ -293,7 +347,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
           style={{
             width: size,
             height: size,
-            transform: `rotate(${currentRotationRef.current}deg)`,
+            transform: `rotate(${displayRotation}deg)`,
           }}
         >
           <canvas
@@ -324,6 +378,20 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
             />
             <span className={styles.autoSpinText}>
               Auto-spin (2s)
+            </span>
+          </label>
+        )}
+
+        {showAutoSpin && onRiggedChange && (
+          <label className={styles.riggedLabel}>
+            <input
+              type="checkbox"
+              checked={riggedEnabled}
+              onChange={(e) => onRiggedChange(e.target.checked)}
+              className={styles.riggedCheckbox}
+            />
+            <span className={styles.riggedText}>
+              Rigged
             </span>
           </label>
         )}
