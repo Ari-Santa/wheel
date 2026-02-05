@@ -22,6 +22,10 @@ export async function GET() {
         cachedAt: new Date(cachedData.timestamp).toISOString(),
         count: cachedData.names.length,
         source: "lodestone",
+      }, {
+        headers: {
+          "Cache-Control": "s-maxage=7200, stale-while-revalidate=86400, public",
+        },
       });
     }
 
@@ -80,6 +84,10 @@ export async function GET() {
       fetchedAt: new Date(now).toISOString(),
       count: names.length,
       source: "lodestone",
+    }, {
+      headers: {
+        "Cache-Control": "s-maxage=7200, stale-while-revalidate=86400, public",
+      },
     });
 
   } catch (error) {
@@ -96,6 +104,10 @@ export async function GET() {
         count: cachedData.names.length,
         source: "lodestone",
         error: error instanceof Error ? error.message : "Unknown error",
+      }, {
+        headers: {
+          "Cache-Control": "s-maxage=3600, stale-while-revalidate=86400, public",
+        },
       });
     }
 
@@ -110,6 +122,11 @@ export async function GET() {
       cached: false,
       fallback: true,
       error: error instanceof Error ? error.message : "Unknown error",
-    }, { status: 500 });
+    }, {
+      status: 500,
+      headers: {
+        "Cache-Control": "s-maxage=300, public",
+      },
+    });
   }
 }
