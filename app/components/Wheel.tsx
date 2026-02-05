@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useRef, useCallback, useEffect, forwardRef, useImperativeHandle, useState } from "react";
+import styles from "./Wheel.module.css";
 
 export interface WheelSegment {
   label: string;
@@ -13,7 +14,6 @@ interface WheelProps {
   spinning: boolean;
   onSpinStart: () => void;
   disabled: boolean;
-  size?: number;
   autoSpinEnabled?: boolean;
   onAutoSpinChange?: (enabled: boolean) => void;
   showAutoSpin?: boolean;
@@ -44,7 +44,6 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   spinning,
   onSpinStart,
   disabled,
-  size = 380,
   autoSpinEnabled = false,
   onAutoSpinChange,
   showAutoSpin = false,
@@ -53,7 +52,9 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   const currentRotationRef = useRef(0);
   const wheelRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [size, setSize] = useState(380);
 
   // Boundary detection RAF loop
   const observerRef = useRef<number | null>(null);
@@ -67,6 +68,23 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 
   useEffect(() => { segmentsRef.current = segments; }, [segments]);
   useEffect(() => { segmentAngleRef.current = segmentAngle; }, [segmentAngle]);
+
+  // Read wheel size from CSS custom property
+  useEffect(() => {
+    function updateSize() {
+      if (containerRef.current) {
+        const computedSize = getComputedStyle(containerRef.current).getPropertyValue('--wheel-size');
+        const parsed = parseInt(computedSize, 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          setSize(parsed);
+        }
+      }
+    }
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const drawWheel = useCallback(() => {
     const canvas = canvasRef.current;
@@ -266,7 +284,7 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
   }), [spin, cancelSpin]);
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div ref={containerRef} className={styles.container}>
       <div className="wheel-container" style={{ width: size, height: size }}>
         <div ref={pointerRef} className="wheel-pointer" />
         <div
@@ -287,32 +305,24 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-center">
+      <div className={styles.controlsRow}>
         <button
           onClick={spin}
           disabled={disabled || spinning}
-          className={`
-            px-6 py-2 xl:px-8 xl:py-3 2xl:px-10 2xl:py-4 rounded-lg text-sm xl:text-base 2xl:text-lg font-bold uppercase tracking-wider
-            transition-all duration-200
-            ${
-              disabled || spinning
-                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                : "bg-accent hover:bg-accent-hover text-white shadow-lg hover:shadow-accent/30 hover:scale-105 active:scale-95"
-            }
-          `}
+          className={disabled || spinning ? styles.spinButtonDisabled : styles.spinButton}
         >
           {spinning ? "Spinning..." : "Spin Wheel"}
         </button>
 
         {showAutoSpin && onAutoSpinChange && (
-          <label className="flex items-center gap-2 px-4 py-2 xl:px-5 xl:py-3 2xl:px-6 2xl:py-4 bg-surface rounded-lg cursor-pointer hover:bg-surface-light transition-colors">
+          <label className={styles.autoSpinLabel}>
             <input
               type="checkbox"
               checked={autoSpinEnabled}
               onChange={(e) => onAutoSpinChange(e.target.checked)}
-              className="cursor-pointer accent-accent w-3.5 h-3.5 xl:w-4 xl:h-4"
+              className={styles.autoSpinCheckbox}
             />
-            <span className="text-xs xl:text-sm 2xl:text-base font-medium text-text-muted whitespace-nowrap">
+            <span className={styles.autoSpinText}>
               Auto-spin (2s)
             </span>
           </label>

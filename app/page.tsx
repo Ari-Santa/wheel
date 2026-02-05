@@ -3,8 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import Wheel, { WheelSegment, WheelRef } from "./components/Wheel";
 import PlayerList, { Player } from "./components/PlayerList";
-import SetupSplash from "./components/SetupSplash";
-import ResultsSplash from "./components/ResultsSplash";
+import GameSplash from "./components/GameSplash";
+import styles from "./page.module.css";
 
 type GameMode = "normal" | "battle-royale";
 type GamePhase = "setup" | "playing" | "finished";
@@ -128,32 +128,6 @@ function formatResultDetail(detail: string): React.ReactNode {
   return <span className="text-text-muted">{detail}</span>;
 }
 
-function useResponsiveWheelSize() {
-  const [wheelSize, setWheelSize] = useState(500);
-
-  useEffect(() => {
-    function updateSize() {
-      if (window.matchMedia('(min-width: 1536px)').matches) {
-        setWheelSize(750);  // 2xl: 1440p screens
-      } else if (window.matchMedia('(min-width: 1280px)').matches) {
-        setWheelSize(600);  // xl: large desktops
-      } else if (window.matchMedia('(min-width: 1024px)').matches) {
-        setWheelSize(500);  // lg: standard desktops
-      } else if (window.matchMedia('(min-width: 640px)').matches) {
-        setWheelSize(380);  // sm: tablets
-      } else {
-        setWheelSize(280);  // mobile
-      }
-    }
-
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
-
-  return wheelSize;
-}
-
 export default function Home() {
   // Initialize with fixed defaults to avoid hydration mismatch
   const [mode, setMode] = useState<GameMode>("normal");
@@ -169,7 +143,6 @@ export default function Home() {
   const [targetPoints, setTargetPoints] = useState(500);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
-  const wheelSize = useResponsiveWheelSize();
 
   const segments = mode === "normal" ? NORMAL_SEGMENTS : BATTLE_SEGMENTS;
   const activePlayers = players.filter((p) => p.status === "active");
@@ -600,16 +573,18 @@ export default function Home() {
 
   return (
     <>
-      {/* Setup Splash Screen */}
-      {phase === "setup" && (
-        <SetupSplash
+      {/* Game Splash - Setup or Results */}
+      {(phase === "setup" || phase === "finished") && (
+        <GameSplash
+          phase={phase}
           mode={mode}
           players={players}
           targetPoints={targetPoints}
+          totalRounds={round}
+          finalRankings={finalRankings}
           onModeChange={(newMode) => {
             setMode(newMode);
             setPlayers([]);
-            // Save mode preference to localStorage
             try {
               localStorage.setItem("wheeloffortune_game_mode", newMode);
             } catch (error) {
@@ -620,19 +595,7 @@ export default function Home() {
           onRemovePlayer={removePlayer}
           onTargetPointsChange={setTargetPoints}
           onStartGame={startGame}
-        />
-      )}
-
-      {/* Results Splash Screen */}
-      {phase === "finished" && (
-        <ResultsSplash
-          mode={mode}
-          players={players}
-          finalRankings={finalRankings}
-          totalRounds={round}
-          targetPoints={mode === "normal" ? targetPoints : undefined}
           onPlayAgain={() => {
-            // Reset scores and status, keep players and mode AND TARGET
             setPhase("playing");
             setCurrentPlayerIndex(0);
             setResults([]);
@@ -646,20 +609,15 @@ export default function Home() {
               eliminationData: undefined,
               revivedCount: 0,
             })));
-            // targetPoints stays the same for Play Again
           }}
           onNewGame={() => {
-            // Return to setup (reset everything including target)
-            // Cancel any in-progress spin
             if (wheelRef.current) {
               wheelRef.current.cancelSpin();
             }
-            // Clear auto-spin timer
             if (autoSpinTimerRef.current) {
               clearTimeout(autoSpinTimerRef.current);
               autoSpinTimerRef.current = null;
             }
-            // Keep auto-spin preference as-is (don't reset)
             setPhase("setup");
             setSpinning(false);
             setResults([]);
@@ -668,7 +626,6 @@ export default function Home() {
             setRound(1);
             setFinalRankings([]);
             setPlayers([]);
-            // Load mode from localStorage or default to normal
             try {
               const savedMode = localStorage.getItem("wheeloffortune_game_mode");
               if (savedMode === "normal" || savedMode === "battle-royale") {
@@ -680,27 +637,28 @@ export default function Home() {
               console.error("Failed to load game mode preference:", error);
               setMode("normal");
             }
-            setTargetPoints(500);  // Reset to default
+            setTargetPoints(500);
           }}
         />
       )}
 
+
       {/* Battle Result Overlay - Fixed at top */}
       {lastResult && !spinning && (
-        <div className="fixed top-4 left-0 right-0 z-50 flex justify-center animate-slide-down pointer-events-none">
-          <div className="bg-surface/95 backdrop-blur-sm border-2 border-accent rounded-xl px-6 py-4 shadow-2xl max-w-md xl:max-w-lg 2xl:max-w-xl mx-4 pointer-events-auto">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="text-sm xl:text-base 2xl:text-lg font-bold text-accent mb-1 uppercase tracking-wide">
+        <div className={styles.resultOverlay}>
+          <div className={styles.resultCard}>
+            <div className={styles.resultCardInner}>
+              <div className={styles.resultContent}>
+                <div className={styles.resultSegment}>
                   {lastResult.segment}
                 </div>
-                <p className="text-base xl:text-lg 2xl:text-xl font-medium text-white">
+                <p className={styles.resultDetail}>
                   {lastResult.detail}
                 </p>
               </div>
               <button
                 onClick={() => setLastResult(null)}
-                className="text-text-muted hover:text-white transition-colors shrink-0 text-xl leading-none"
+                className={styles.dismissButton}
                 aria-label="Dismiss"
               >
                 ×
@@ -710,11 +668,11 @@ export default function Home() {
         </div>
       )}
 
-      <main className="h-screen bg-background py-4 px-4 overflow-hidden">
+      <main className={styles.main}>
       {/* Main Content */}
-      <div className="flex flex-col lg:flex-row lg:items-start gap-2 xl:gap-4 2xl:gap-6">
+      <div className={styles.mainContent}>
         {/* Left Panel: Players */}
-        <div className="lg:w-72 xl:w-80 2xl:w-96 shrink-0">
+        <div className={styles.leftPanel}>
           {/* Only show PlayerList during gameplay, not setup */}
           {phase !== "setup" && (
             <>
@@ -728,11 +686,11 @@ export default function Home() {
               />
 
               {/* Game Controls */}
-              <div className="mt-4 space-y-2">
+              <div className={styles.gameControls}>
                 {(phase === "playing" || phase === "finished") && (
                   <button
                     onClick={resetGame}
-                    className="w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider bg-surface-light hover:bg-gray-500 text-white transition-all"
+                    className={styles.resetButton}
                   >
                     Reset Game
                   </button>
@@ -743,18 +701,18 @@ export default function Home() {
         </div>
 
         {/* Center: Wheel */}
-        <div className="flex-1 flex flex-col items-center">
+        <div className={styles.centerPanel}>
           {/* Current Player Banner */}
           {phase === "playing" && currentPlayerName && (
-            <div className="mb-2 bg-surface rounded-xl px-5 py-2 text-center fade-in">
-              <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">Current Player</span>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-bold text-accent">{currentPlayerName}</p>
+            <div className={styles.currentPlayerBanner}>
+              <span className={styles.currentPlayerLabel}>Current Player</span>
+              <p className={styles.currentPlayerName}>{currentPlayerName}</p>
               {mode === "battle-royale" ? (
-                <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">
+                <span className={styles.currentPlayerStatus}>
                   Round {round} &middot; {activePlayers.length} remaining
                 </span>
               ) : (
-                <span className="text-text-muted text-xs xl:text-sm 2xl:text-base">
+                <span className={styles.currentPlayerStatus}>
                   Target: {targetPoints} points
                 </span>
               )}
@@ -768,7 +726,6 @@ export default function Home() {
             spinning={spinning}
             onSpinStart={handleSpinStart}
             disabled={!canSpin}
-            size={wheelSize}
             autoSpinEnabled={autoSpinEnabled}
             onAutoSpinChange={(enabled) => {
               setAutoSpinEnabled(enabled);
@@ -790,32 +747,32 @@ export default function Home() {
         </div>
 
         {/* Right Panel: Results Log */}
-        <div className="lg:w-64 xl:w-72 2xl:w-80 shrink-0">
-          <div className="bg-surface rounded-xl p-4">
-            <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Results</h2>
+        <div className={styles.rightPanel}>
+          <div className={styles.resultsPanel}>
+            <h2 className={styles.panelTitle}>Results</h2>
             {results.length === 0 ? (
-              <p className="text-text-muted text-sm text-center py-4">
+              <p className={styles.emptyMessage}>
                 No spins yet
               </p>
             ) : (
-              <div className="space-y-2 max-h-96 xl:max-h-[540px] 2xl:max-h-[650px] overflow-y-auto">
+              <div className={styles.resultsList}>
                 {results.map((r, i) => (
                   <div
                     key={i}
-                    className="bg-surface-light/50 rounded-lg px-2.5 py-2 text-xs xl:text-sm"
+                    className={styles.resultItem}
                   >
                     {/* Player name and segment on first line */}
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="font-semibold text-accent truncate text-sm">
+                    <div className={styles.resultItemHeader}>
+                      <span className={styles.resultPlayerName}>
                         {r.playerName}
                       </span>
-                      <span className="text-text-muted text-[10px]">
+                      <span className={styles.resultSegmentName}>
                         {r.segment}
                       </span>
                     </div>
 
                     {/* Detail with visual formatting */}
-                    <div className="text-[10px] leading-tight">
+                    <div className={styles.resultItemDetail}>
                       {formatResultDetail(r.detail)}
                     </div>
                   </div>
@@ -826,25 +783,25 @@ export default function Home() {
 
           {/* Normal Mode Scoreboard */}
           {mode === "normal" && players.length > 0 && phase !== "setup" && (
-            <div className="bg-surface rounded-xl p-4 mt-4">
-              <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Scoreboard</h2>
-              <div className="space-y-1">
+            <div className={styles.scoreboardPanel}>
+              <h2 className={styles.panelTitle}>Scoreboard</h2>
+              <div className={styles.scoreList}>
                 {[...players]
                   .sort((a, b) => b.score - a.score)
                   .map((p) => (
                     <div
                       key={p.id}
-                      className="flex justify-between text-sm xl:text-base 2xl:text-lg px-2 py-1 rounded bg-surface-light/30"
+                      className={styles.scoreItem}
                     >
-                      <span className="truncate">{p.name}</span>
+                      <span className={styles.scoreName}>{p.name}</span>
                       <span
-                        className={`font-mono font-bold ml-2 ${
+                        className={
                           p.score > 0
-                            ? "text-success"
+                            ? styles.scorePositive
                             : p.score < 0
-                              ? "text-danger"
-                              : "text-text-muted"
-                        }`}
+                              ? styles.scoreNegative
+                              : styles.scoreNeutral
+                        }
                       >
                         {p.score}
                       </span>

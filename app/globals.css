@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
-@theme {
+/* CSS Custom Properties (Design Tokens) */
+:root {
   --color-background: #1a1a1a;
   --color-surface: #2d2d2d;
   --color-surface-light: #3a3a3a;
@@ -16,10 +15,19 @@
   --font-mono: "Geist Mono", ui-monospace, monospace;
 }
 
+/* Reset and base styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .wheel-container {
@@ -172,3 +180,13 @@ body {
 .animate-fade-out {
   animation: fade-out 0.5s ease-out;
 }
+
+/* Utility classes for text colors (used in dynamic content) */
+.text-danger { color: var(--color-danger); }
+.text-success { color: var(--color-success); }
+.text-accent { color: var(--color-accent); }
+.text-text-muted { color: var(--color-text-muted); }
+.text-green-400 { color: #4ade80; }
+.text-red-500 { color: #ef4444; }
+.text-blue-400 { color: #60a5fa; }
+.font-semibold { font-weight: 600; }

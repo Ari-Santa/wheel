@@ -1,0 +1,395 @@
+/* PlayerList Component Styles */
+
+.container {
+  background-color: var(--color-surface);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 1280px) {
+  .container {
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    padding: 1.5rem;
+  }
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-accent);
+}
+
+@media (min-width: 1280px) {
+  .title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .title {
+    font-size: 1.5rem;
+  }
+}
+
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.input {
+  flex: 1;
+  background-color: var(--color-surface-light);
+  border: 1px solid #4b5563;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: white;
+  transition: border-color 0.2s;
+}
+
+@media (min-width: 1280px) {
+  .input {
+    padding: 0.625rem 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .input {
+    padding: 0.75rem;
+    font-size: 1.125rem;
+  }
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.addButton {
+  background-color: var(--color-accent);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+@media (min-width: 1280px) {
+  .addButton {
+    padding: 0.625rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .addButton {
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+  }
+}
+
+.addButton:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.battleRoyaleHint {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.presetSection {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #4b5563;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.sectionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.addAllButton {
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.addAllButton:hover {
+  color: var(--color-accent-hover);
+}
+
+.clearAllButton {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.clearAllButton:hover {
+  color: var(--color-danger);
+}
+
+.tagContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.presetTag {
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  transition: color 0.2s;
+  background-color: rgba(168, 85, 247, 0.2);
+  border: 1px solid #a855f7;
+  cursor: pointer;
+}
+
+.presetTag:hover:not(:disabled) {
+  color: #d8b4fe;
+}
+
+.presetTagDisabled {
+  composes: presetTag;
+  background-color: rgba(58, 58, 58, 0.3);
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.savedTag {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background-color: rgba(255, 140, 0, 0.2);
+  border: 1px solid var(--color-accent);
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.savedTagName {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.savedTagName:hover {
+  color: var(--color-accent);
+}
+
+.savedTagRemove {
+  color: var(--color-text-muted);
+  margin-left: 0.25rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  transition: color 0.2s;
+}
+
+.savedTagRemove:hover {
+  color: var(--color-danger);
+}
+
+.scrollContainer {
+  overflow-y: auto;
+  max-height: 24rem;
+  scrollbar-gutter: stable;
+}
+
+@media (min-width: 1280px) {
+  .scrollContainer {
+    max-height: 33.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scrollContainer {
+    max-height: calc(100vh - 12rem);
+  }
+}
+
+.scrollContainerCompact {
+  composes: scrollContainer;
+  max-height: 20rem;
+}
+
+@media (min-width: 1280px) {
+  .scrollContainerCompact {
+    max-height: 31.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .scrollContainerCompact {
+    max-height: calc(100vh - 14rem);
+  }
+}
+
+.emptyMessage {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.playerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.playerListCompact {
+  composes: playerList;
+  gap: 0.25rem;
+}
+
+.playerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background-color: rgba(58, 58, 58, 0.5);
+}
+
+@media (min-width: 1280px) {
+  .playerItem {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .playerItem {
+    font-size: 1.125rem;
+  }
+}
+
+.playerItemCompact {
+  composes: playerItem;
+  padding: 0.25rem 0.5rem;
+}
+
+.playerItemEliminated {
+  composes: playerItem;
+  opacity: 0.4;
+  text-decoration: line-through;
+  background-color: rgba(58, 58, 58, 0.3);
+}
+
+.playerItemEliminatedCompact {
+  composes: playerItemEliminated;
+  padding: 0.25rem 0.5rem;
+}
+
+.playerItemWinner {
+  composes: playerItem;
+  background-color: rgba(255, 140, 0, 0.2);
+  border: 1px solid var(--color-accent);
+}
+
+.playerItemWinnerCompact {
+  composes: playerItemWinner;
+  padding: 0.25rem 0.5rem;
+}
+
+.playerItemCurrent {
+  composes: playerItem;
+  background-color: rgba(255, 140, 0, 0.2);
+  border: 1px solid var(--color-accent);
+}
+
+.playerItemCurrentCompact {
+  composes: playerItemCurrent;
+  padding: 0.25rem 0.5rem;
+}
+
+.playerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.winnerIcon {
+  color: #facc15;
+  flex-shrink: 0;
+}
+
+.eliminatedIcon {
+  color: var(--color-danger);
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+.currentIcon {
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.playerName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+.scorePositive {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  color: var(--color-success);
+}
+
+.scoreNegative {
+  font-size: 0.75rem;
+  margin-left: 0.25rem;
+  color: var(--color-danger);
+}
+
+.removeButton {
+  color: var(--color-text-muted);
+  margin-left: 0.5rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.removeButton:hover {
+  color: var(--color-danger);
+}

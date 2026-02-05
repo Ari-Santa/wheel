@@ -1,0 +1,213 @@
+/* Wheel Component Styles */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  --wheel-size: 280px;
+}
+
+@media (min-width: 640px) {
+  .container {
+    --wheel-size: 380px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    --wheel-size: 500px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    --wheel-size: 600px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container {
+    --wheel-size: 700px;
+  }
+}
+
+/* 1080p height-constrained screens */
+@media (min-width: 1024px) and (max-height: 999px) {
+  .container {
+    --wheel-size: 560px;
+  }
+}
+
+@media (min-width: 1280px) and (max-height: 999px) {
+  .container {
+    --wheel-size: 600px;
+  }
+}
+
+@media (min-width: 1536px) and (max-height: 999px) {
+  .container {
+    --wheel-size: 640px;
+  }
+}
+
+/* 1440p and larger screens */
+@media (min-width: 1024px) and (min-height: 1000px) {
+  .container {
+    --wheel-size: 850px;
+  }
+}
+
+@media (min-width: 1280px) and (min-height: 1000px) {
+  .container {
+    --wheel-size: 950px;
+  }
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .container {
+    --wheel-size: 1100px;
+  }
+}
+
+.controlsRow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .controlsRow {
+    flex-direction: row;
+  }
+}
+
+.spinButton {
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  background-color: var(--color-accent);
+  color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 1280px) {
+  .spinButton {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .spinButton {
+    padding: 1rem 2.5rem;
+    font-size: 1.125rem;
+  }
+}
+
+.spinButton:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+  box-shadow: 0 10px 15px -3px rgba(255, 140, 0, 0.3);
+  transform: scale(1.05);
+}
+
+.spinButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.spinButtonDisabled {
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  border: none;
+  background-color: #4b5563;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+@media (min-width: 1280px) {
+  .spinButtonDisabled {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .spinButtonDisabled {
+    padding: 1rem 2.5rem;
+    font-size: 1.125rem;
+  }
+}
+
+.autoSpinLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-surface);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+@media (min-width: 1280px) {
+  .autoSpinLabel {
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .autoSpinLabel {
+    padding: 1rem 1.5rem;
+  }
+}
+
+.autoSpinLabel:hover {
+  background-color: var(--color-surface-light);
+}
+
+.autoSpinCheckbox {
+  cursor: pointer;
+  accent-color: var(--color-accent);
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+@media (min-width: 1280px) {
+  .autoSpinCheckbox {
+    width: 1rem;
+    height: 1rem;
+  }
+}
+
+.autoSpinText {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+  .autoSpinText {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .autoSpinText {
+    font-size: 1rem;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import styles from "./SplashScreen.module.css";
 
 interface SplashScreenProps {
   onDismiss: () => void;
@@ -22,21 +23,21 @@ export default function SplashScreen({ onDismiss }: SplashScreenProps) {
 
   if (!isVisible) {
     return (
-      <div className="fixed inset-0 bg-background z-50 flex items-center justify-center animate-fade-out pointer-events-none">
-        <h1 className="text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl font-bold">
-          <span className="text-accent">Wheel</span> of Ethereal
+      <div className={styles.containerFadeOut}>
+        <h1 className={styles.titleNoMargin}>
+          <span className={styles.accent}>Wheel</span> of Ethereal
         </h1>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
-      <div className="text-center animate-fade-in">
-        <h1 className="text-5xl md:text-6xl xl:text-7xl 2xl:text-8xl font-bold mb-4">
-          <span className="text-accent">Wheel</span> of Ethereal
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <h1 className={styles.title}>
+          <span className={styles.accent}>Wheel</span> of Ethereal
         </h1>
-        <p className="text-text-muted text-sm md:text-base animate-pulse">
+        <p className={styles.subtitle}>
           Loading...
         </p>
       </div>

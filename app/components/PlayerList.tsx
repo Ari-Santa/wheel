@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import styles from "./PlayerList.module.css";
 
 export interface Player {
   id: string;
@@ -125,7 +126,6 @@ export default function PlayerList({
 
         if (isAboveView || isBelowView) {
           // Scroll element into view within container only
-          const scrollTop = container.scrollTop;
           const elementTop = currentPlayerElement.offsetTop;
           const containerHeight = container.clientHeight;
           const elementHeight = currentPlayerElement.offsetHeight;
@@ -148,12 +148,25 @@ export default function PlayerList({
     }
   }, [currentPlayerIndex, gameActive]);
 
+  const getPlayerItemClass = (player: Player, index: number) => {
+    if (player.status === "eliminated") {
+      return compact ? styles.playerItemEliminatedCompact : styles.playerItemEliminated;
+    }
+    if (player.status === "winner") {
+      return compact ? styles.playerItemWinnerCompact : styles.playerItemWinner;
+    }
+    if (index === currentPlayerIndex && gameActive) {
+      return compact ? styles.playerItemCurrentCompact : styles.playerItemCurrent;
+    }
+    return compact ? styles.playerItemCompact : styles.playerItem;
+  };
+
   return (
-    <div className="bg-surface rounded-xl p-4 xl:p-5 2xl:p-6 w-full">
-      <h2 className="text-lg xl:text-xl 2xl:text-2xl font-bold mb-3 text-accent">Players</h2>
+    <div className={styles.container}>
+      <h2 className={styles.title}>Players</h2>
 
       {!gameActive && (
-        <div className="flex gap-2 mb-4">
+        <div className={styles.inputRow}>
           <input
             type="text"
             value={newName}
@@ -161,11 +174,11 @@ export default function PlayerList({
             onKeyDown={handleKeyDown}
             placeholder="Enter player name"
             maxLength={24}
-            className="flex-1 bg-surface-light border border-gray-600 rounded-lg px-3 py-2 xl:py-2.5 2xl:py-3 text-sm xl:text-base 2xl:text-lg text-white placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
+            className={styles.input}
           />
           <button
             onClick={handleAdd}
-            className="bg-accent hover:bg-accent-hover text-white px-4 py-2 xl:py-2.5 2xl:py-3 rounded-lg text-sm xl:text-base 2xl:text-lg font-semibold transition-colors"
+            className={styles.addButton}
           >
             Add
           </button>
@@ -173,7 +186,7 @@ export default function PlayerList({
       )}
 
       {mode === "battle-royale" && !gameActive && (
-        <p className="text-text-muted text-xs mb-3">
+        <p className={styles.battleRoyaleHint}>
           {players.length < 2
             ? `Add at least ${2 - players.length} more player${players.length === 0 ? "s" : ""}`
             : `${players.length} players ready`}
@@ -182,9 +195,9 @@ export default function PlayerList({
 
       {/* FC Members Preset Section */}
       {!gameActive && presetPlayers.length > 0 && (
-        <div className="mb-4 pb-4 border-b border-gray-600">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+        <div className={styles.presetSection}>
+          <div className={styles.sectionHeader}>
+            <label className={styles.sectionLabel}>
               FC Members ({presetPlayers.length})
             </label>
             <button
@@ -197,12 +210,12 @@ export default function PlayerList({
                   }
                 }
               }}
-              className="text-xs text-accent hover:text-accent-hover transition-colors font-semibold"
+              className={styles.addAllButton}
             >
               Add All
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.tagContainer}>
             {presetPlayers.map((name) => (
               <button
                 key={name}
@@ -212,11 +225,7 @@ export default function PlayerList({
                   }
                 }}
                 disabled={players.some((p) => p.name === name)}
-                className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                  players.some((p) => p.name === name)
-                    ? "bg-surface-light/30 text-text-muted cursor-default"
-                    : "bg-purple-500/20 border border-purple-500 hover:text-purple-300 cursor-pointer"
-                }`}
+                className={players.some((p) => p.name === name) ? styles.presetTagDisabled : styles.presetTag}
                 title={players.some((p) => p.name === name) ? "Already in game" : "Add to game"}
               >
                 {name}
@@ -228,35 +237,35 @@ export default function PlayerList({
 
       {/* Saved Players Section */}
       {!gameActive && savedPlayers.length > 0 && (
-        <div className="mb-4 pb-4 border-b border-gray-600">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+        <div className={styles.presetSection}>
+          <div className={styles.sectionHeader}>
+            <label className={styles.sectionLabel}>
               Saved Players ({savedPlayers.length})
             </label>
             <button
               onClick={clearAllSaved}
-              className="text-xs text-text-muted hover:text-danger transition-colors"
+              className={styles.clearAllButton}
               title="Clear all saved players"
             >
               Clear All
             </button>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className={styles.tagContainer}>
             {savedPlayers.map((name) => (
               <div
                 key={name}
-                className="flex items-center gap-1 bg-accent/20 border border-accent rounded-full px-3 py-1 text-xs"
+                className={styles.savedTag}
               >
                 <button
                   onClick={() => addSavedPlayerToGame(name)}
-                  className="hover:text-accent transition-colors cursor-pointer"
+                  className={styles.savedTagName}
                   title="Add to game"
                 >
                   {name}
                 </button>
                 <button
                   onClick={() => removeFromSaved(name)}
-                  className="text-text-muted hover:text-danger ml-1 transition-colors"
+                  className={styles.savedTagRemove}
                   title="Remove from saved"
                 >
                   ✕
@@ -269,46 +278,33 @@ export default function PlayerList({
 
       <div
         ref={scrollContainerRef}
-        className={`overflow-y-auto ${compact ? "max-h-80 xl:max-h-[500px] 2xl:max-h-[600px]" : "max-h-96 xl:max-h-[540px] 2xl:max-h-[650px]"}`}
-        style={{ scrollbarGutter: "stable" }}
+        className={compact ? styles.scrollContainerCompact : styles.scrollContainer}
       >
         {players.length === 0 ? (
-          <p className="text-text-muted text-sm text-center py-4">No players yet</p>
+          <p className={styles.emptyMessage}>No players yet</p>
         ) : (
-          <ul className={`space-y-${compact ? "1" : "2"}`}>
+          <ul className={compact ? styles.playerListCompact : styles.playerList}>
             {players.map((player, index) => (
               <li
                 key={player.id}
                 ref={(el) => {
                   playerItemRefs.current[index] = el;
                 }}
-                className={`
-                  flex items-center justify-between rounded-lg transition-all duration-200
-                  ${compact ? "px-2 py-1 text-sm xl:text-base 2xl:text-lg" : "px-3 py-2 text-sm xl:text-base 2xl:text-lg"}
-                  ${
-                    player.status === "eliminated"
-                      ? "player-eliminated bg-surface-light/30"
-                      : player.status === "winner"
-                        ? "bg-accent/20 border border-accent"
-                        : index === currentPlayerIndex && gameActive
-                          ? "bg-accent/20 border border-accent"
-                          : "bg-surface-light/50"
-                  }
-                `}
+                className={getPlayerItemClass(player, index)}
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <div className={styles.playerInfo}>
                   {player.status === "winner" && (
-                    <span className="text-yellow-400 shrink-0">&#9733;</span>
+                    <span className={styles.winnerIcon}>&#9733;</span>
                   )}
                   {player.status === "eliminated" && (
-                    <span className="text-danger shrink-0 text-xs">&#10005;</span>
+                    <span className={styles.eliminatedIcon}>&#10005;</span>
                   )}
                   {player.status === "active" && index === currentPlayerIndex && gameActive && (
-                    <span className="text-accent shrink-0">&#9654;</span>
+                    <span className={styles.currentIcon}>&#9654;</span>
                   )}
-                  <span className="truncate text-sm">{player.name}</span>
+                  <span className={styles.playerName}>{player.name}</span>
                   {mode === "normal" && player.score !== 0 && (
-                    <span className={`text-xs ml-1 ${player.score > 0 ? "text-success" : "text-danger"}`}>
+                    <span className={player.score > 0 ? styles.scorePositive : styles.scoreNegative}>
                       ({player.score > 0 ? "+" : ""}{player.score})
                     </span>
                   )}
@@ -317,7 +313,7 @@ export default function PlayerList({
                 {!gameActive && (
                   <button
                     onClick={() => onRemovePlayer(player.id)}
-                    className="text-text-muted hover:text-danger ml-2 shrink-0 transition-colors"
+                    className={styles.removeButton}
                     title="Remove player"
                   >
                     &#10005;

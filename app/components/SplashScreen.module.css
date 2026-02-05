@@ -1,0 +1,120 @@
+/* SplashScreen Component Styles */
+
+.container {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-background);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.containerFadeOut {
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-background);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fade-out 0.5s ease-out;
+  pointer-events: none;
+}
+
+.content {
+  text-align: center;
+  animation: fade-in 0.5s ease-out;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 3.75rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .title {
+    font-size: 4.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .title {
+    font-size: 6rem;
+  }
+}
+
+.titleNoMargin {
+  font-size: 3rem;
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .titleNoMargin {
+    font-size: 3.75rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .titleNoMargin {
+    font-size: 4.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .titleNoMargin {
+    font-size: 6rem;
+  }
+}
+
+.accent {
+  color: var(--color-accent);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@media (min-width: 768px) {
+  .subtitle {
+    font-size: 1rem;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

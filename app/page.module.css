@@ -1,0 +1,479 @@
+/* Page Component Styles */
+
+/* Result Overlay */
+.resultOverlay {
+  position: fixed;
+  top: 1rem;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.resultCard {
+  background-color: rgba(45, 45, 45, 0.95);
+  backdrop-filter: blur(4px);
+  border: 2px solid var(--color-accent);
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 28rem;
+  margin: 0 1rem;
+  pointer-events: auto;
+}
+
+@media (min-width: 1280px) {
+  .resultCard {
+    max-width: 32rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .resultCard {
+    max-width: 36rem;
+  }
+}
+
+.resultCardInner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.resultContent {
+  flex: 1;
+}
+
+.resultSegment {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 1280px) {
+  .resultSegment {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .resultSegment {
+    font-size: 1.125rem;
+  }
+}
+
+.resultDetail {
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+}
+
+@media (min-width: 1280px) {
+  .resultDetail {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .resultDetail {
+    font-size: 1.25rem;
+  }
+}
+
+.dismissButton {
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.dismissButton:hover {
+  color: white;
+}
+
+/* Main Layout */
+.main {
+  height: 100vh;
+  background-color: var(--color-background);
+  padding: 0.5rem;
+  overflow: hidden;
+}
+
+.mainContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@media (min-width: 1024px) {
+  .mainContent {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .mainContent {
+    gap: 1rem;
+  }
+}
+
+/* Left Panel */
+.leftPanel {
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .leftPanel {
+    width: 18rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .leftPanel {
+    width: 20rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .leftPanel {
+    width: 24rem;
+  }
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .leftPanel {
+    width: 28rem;
+  }
+}
+
+.gameControls {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resetButton {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--color-surface-light);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.resetButton:hover {
+  background-color: #6b7280;
+}
+
+/* Center Panel - Wheel */
+.centerPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.currentPlayerBanner {
+  margin-bottom: 1.5rem;
+  background-color: var(--color-surface);
+  border-radius: 0.75rem;
+  padding: 0.25rem 1rem;
+  text-align: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.currentPlayerLabel {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1280px) {
+  .currentPlayerLabel {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .currentPlayerLabel {
+    font-size: 1rem;
+  }
+}
+
+.currentPlayerName {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+@media (min-width: 1280px) {
+  .currentPlayerName {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .currentPlayerName {
+    font-size: 1.5rem;
+  }
+}
+
+.currentPlayerStatus {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 1280px) {
+  .currentPlayerStatus {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .currentPlayerStatus {
+    font-size: 1rem;
+  }
+}
+
+/* Right Panel */
+.rightPanel {
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .rightPanel {
+    width: 16rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .rightPanel {
+    width: 18rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .rightPanel {
+    width: 20rem;
+  }
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .rightPanel {
+    width: 26rem;
+  }
+}
+
+.resultsPanel {
+  background-color: var(--color-surface);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.panelTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-accent);
+}
+
+@media (min-width: 1280px) {
+  .panelTitle {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .panelTitle {
+    font-size: 1.5rem;
+  }
+}
+
+.emptyMessage {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.resultsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+@media (min-width: 1280px) {
+  .resultsList {
+    max-height: 33.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .resultsList {
+    max-height: calc(100vh - 12rem);
+  }
+}
+
+.resultItem {
+  background-color: rgba(58, 58, 58, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1280px) {
+  .resultItem {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .resultItem {
+    font-size: 1.25rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+.resultItemHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.125rem;
+}
+
+.resultPlayerName {
+  font-weight: 600;
+  color: var(--color-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .resultPlayerName {
+    font-size: 1.25rem;
+  }
+}
+
+.resultSegmentName {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .resultSegmentName {
+    font-size: 0.875rem;
+  }
+}
+
+.resultItemDetail {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+@media (min-width: 1536px) and (min-height: 1000px) {
+  .resultItemDetail {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+}
+
+/* Scoreboard */
+.scoreboardPanel {
+  background-color: var(--color-surface);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.scoreList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.scoreItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: rgba(58, 58, 58, 0.3);
+}
+
+@media (min-width: 1280px) {
+  .scoreItem {
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  .scoreItem {
+    font-size: 1.125rem;
+  }
+}
+
+.scoreName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreValue {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  margin-left: 0.5rem;
+}
+
+.scorePositive {
+  composes: scoreValue;
+  color: var(--color-success);
+}
+
+.scoreNegative {
+  composes: scoreValue;
+  color: var(--color-danger);
+}
+
+.scoreNeutral {
+  composes: scoreValue;
+  color: var(--color-text-muted);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
