@@ -10,15 +10,11 @@ type GamePhase = "setup" | "finished";
 
 interface GameSplashProps {
   phase: GamePhase;
-  mode: "normal" | "battle-royale";
   players: Player[];
-  targetPoints: number;
   totalRounds: number;
   finalRankings: BattleRoyaleRanking[];
-  onModeChange: (mode: "normal" | "battle-royale") => void;
   onAddPlayer: (name: string) => void;
   onRemovePlayer: (id: string) => void;
-  onTargetPointsChange: (points: number) => void;
   onStartGame: () => void;
   onPlayAgain: () => void;
   onNewGame: () => void;
@@ -26,15 +22,11 @@ interface GameSplashProps {
 
 export default function GameSplash({
   phase,
-  mode,
   players,
-  targetPoints,
   totalRounds,
   finalRankings,
-  onModeChange,
   onAddPlayer,
   onRemovePlayer,
-  onTargetPointsChange,
   onStartGame,
   onPlayAgain,
   onNewGame,
@@ -43,20 +35,9 @@ export default function GameSplash({
   const [savedPlayers, setSavedPlayers] = useState<string[]>([]);
   const [presetPlayers, setPresetPlayers] = useState<string[]>([]);
   const [loadingPresets, setLoadingPresets] = useState(true);
-  const [targetInput, setTargetInput] = useState(targetPoints.toString());
 
-  const canStart =
-    (mode === "normal" && players.length > 0 && targetPoints >= 100 && targetPoints <= 10000) ||
-    (mode === "battle-royale" && players.length >= 2);
+  const canStart = players.length >= 2;
 
-  // Sort players by score for normal mode results
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
-  const winner = sortedPlayers[0];
-
-  // Sync target input with prop when it changes
-  useEffect(() => {
-    setTargetInput(targetPoints.toString());
-  }, [targetPoints]);
 
   // Fetch FC members from API on mount
   useEffect(() => {
@@ -113,14 +94,6 @@ export default function GameSplash({
     }
   };
 
-  const handleTargetChange = (value: string) => {
-    setTargetInput(value);
-    const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 100 && numValue <= 10000) {
-      onTargetPointsChange(numValue);
-    }
-  };
-
   const removeFromSaved = (name: string) => {
     const updated = savedPlayers.filter((n) => n !== name);
     setSavedPlayers(updated);
@@ -138,26 +111,6 @@ export default function GameSplash({
     }
   };
 
-  const getPlayerRowClass = (index: number) => {
-    if (index === 0) return styles.playerRowFirst;
-    if (index === 1) return styles.playerRowSecond;
-    if (index === 2) return styles.playerRowThird;
-    return styles.playerRowDefault;
-  };
-
-  const getRankBadgeClass = (index: number) => {
-    if (index === 0) return styles.rankBadgeFirst;
-    if (index === 1) return styles.rankBadgeSecond;
-    if (index === 2) return styles.rankBadgeThird;
-    return styles.rankBadgeDefault;
-  };
-
-  const getScoreClass = (score: number) => {
-    if (score > 0) return styles.scorePositive;
-    if (score < 0) return styles.scoreNegative;
-    return styles.scoreNeutral;
-  };
-
   // Dynamic title based on phase
   const renderTitle = () => {
     if (phase === "setup") {
@@ -167,13 +120,9 @@ export default function GameSplash({
         </>
       );
     }
-    return mode === "battle-royale" ? (
+    return (
       <>
         <span className={styles.accent}>Battle</span> Complete
-      </>
-    ) : (
-      <>
-        <span className={styles.accent}>Game</span> Over
       </>
     );
   };
@@ -183,9 +132,7 @@ export default function GameSplash({
     if (phase === "setup") {
       return "Choose your mode and add players to begin";
     }
-    return mode === "battle-royale"
-      ? `${players.length} players competed over ${totalRounds} rounds`
-      : `Target: ${targetPoints} points | ${players.length} players`;
+    return `${players.length} players competed over ${totalRounds} rounds`;
   };
 
   return (
@@ -200,66 +147,6 @@ export default function GameSplash({
         {/* Setup Content */}
         {phase === "setup" && (
           <>
-            {/* Mode Selection */}
-            <div className={styles.section}>
-              <h2 className={styles.sectionTitle}>Game Mode</h2>
-              <div className={styles.modeGrid}>
-                <button
-                  onClick={() => onModeChange("normal")}
-                  className={mode === "normal" ? styles.modeButtonActive : styles.modeButton}
-                >
-                  <div className={styles.modeTitle}>Normal Mode</div>
-                  <div className={styles.modeSubtitle}>Points-based game</div>
-                </button>
-                <button
-                  onClick={() => onModeChange("battle-royale")}
-                  className={mode === "battle-royale" ? styles.modeButtonActive : styles.modeButton}
-                >
-                  <div className={styles.modeTitle}>Battle Royale</div>
-                  <div className={styles.modeSubtitle}>Last one standing</div>
-                </button>
-              </div>
-            </div>
-
-            {/* Normal Mode Configuration */}
-            {mode === "normal" && (
-              <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Game Settings</h2>
-                <div className={styles.settingsBlock}>
-                  <label className={styles.label}>
-                    <span className={styles.labelText}>Target Points to Win</span>
-                    <input
-                      type="number"
-                      value={targetInput}
-                      onChange={(e) => handleTargetChange(e.target.value)}
-                      min={100}
-                      max={10000}
-                      step={50}
-                      className={styles.targetInput}
-                    />
-                    <span className={styles.labelHint}>
-                      First player to reach this score wins (100-10,000)
-                    </span>
-                  </label>
-                  <div className={styles.quickPresetsRow}>
-                    <span className={styles.quickLabel}>Quick:</span>
-                    {[300, 500, 1000, 2000].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => {
-                          setTargetInput(preset.toString());
-                          onTargetPointsChange(preset);
-                        }}
-                        className={targetPoints === preset ? styles.presetButtonActive : styles.presetButton}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Player Setup */}
             <div className={styles.section}>
               <h2 className={styles.sectionTitle}>Players</h2>
@@ -358,8 +245,8 @@ export default function GameSplash({
                 </div>
               )}
 
-              {mode === "battle-royale" && players.length < 2 && (
-                <p className={styles.helperText}>Add at least 2 players to start Battle Royale (max 64)</p>
+              {players.length < 2 && (
+                <p className={styles.helperText}>Add at least 2 players to start (max 64)</p>
               )}
 
               {players.length > 0 && (
@@ -396,16 +283,12 @@ export default function GameSplash({
 
             {/* Start Button */}
             <button onClick={onStartGame} disabled={!canStart} className={styles.startButton}>
-              {mode === "battle-royale" ? "Start Battle Royale" : "Start Game"}
+              Start Battle Royale
             </button>
 
             {!canStart && (
               <p className={styles.startHint}>
-                {mode === "battle-royale"
-                  ? "Add at least 2 players to begin"
-                  : players.length === 0
-                  ? "Add at least 1 player to begin"
-                  : "Set a valid target (100-10,000 points)"}
+                Add at least 2 players to begin
               </p>
             )}
           </>
@@ -415,41 +298,12 @@ export default function GameSplash({
         {phase === "finished" && (
           <>
             <div className={styles.resultsWrapper}>
-              {mode === "battle-royale" ? (
-                <BattleRoyaleResults
-                  rankings={finalRankings}
-                  totalPlayers={players.length}
-                  totalRounds={totalRounds}
-                  compact={false}
-                />
-              ) : (
-                <div className={styles.leaderboardContainer}>
-                  <h2 className={styles.leaderboardTitle}>Final Leaderboard</h2>
-
-                  {winner && (
-                    <div className={styles.winnerSpotlight}>
-                      <div className={styles.winnerTrophy}>🏆</div>
-                      <div className={styles.winnerName}>{winner.name}</div>
-                      <div className={styles.winnerScore}>{winner.score} points</div>
-                      <div className={styles.winnerSubtitle}>
-                        {targetPoints ? `Reached ${targetPoints} point target!` : "Champion"}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className={styles.rankingsList}>
-                    {sortedPlayers.map((player, index) => (
-                      <div key={player.id} className={getPlayerRowClass(index)}>
-                        <div className={getRankBadgeClass(index)}>{index === 0 ? "🏆" : index + 1}</div>
-                        <div className={styles.playerNameWrapper}>
-                          <div className={styles.playerName}>{player.name}</div>
-                        </div>
-                        <div className={getScoreClass(player.score)}>{player.score}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <BattleRoyaleResults
+                rankings={finalRankings}
+                totalPlayers={players.length}
+                totalRounds={totalRounds}
+                compact={false}
+              />
             </div>
 
             {/* Action Buttons */}

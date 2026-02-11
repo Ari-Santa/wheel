@@ -6,7 +6,6 @@ import PlayerList, { Player } from "./components/PlayerList";
 import GameSplash from "./components/GameSplash";
 import styles from "./page.module.css";
 
-type GameMode = "normal" | "battle-royale";
 type GamePhase = "setup" | "playing" | "finished";
 
 interface GameResult {
@@ -25,17 +24,6 @@ export interface BattleRoyaleRanking {
   survivedRounds: number;
   revivedCount: number;
 }
-
-const NORMAL_SEGMENTS: WheelSegment[] = [
-  { label: "Lucky! +100", color: "#e67e22" },
-  { label: "Unlucky -50", color: "#8e44ad" },
-  { label: "Spin Again", color: "#2980b9" },
-  { label: "Double Pts", color: "#27ae60" },
-  { label: "Lose Turn", color: "#c0392b" },
-  { label: "Bonus Round", color: "#f39c12" },
-  { label: "+50 Points", color: "#1abc9c" },
-  { label: "-25 Points", color: "#e74c3c" },
-];
 
 const BATTLE_SEGMENTS: WheelSegment[] = [
   { label: "Victory", color: "#27ae60" },
@@ -110,27 +98,11 @@ function formatResultDetail(detail: string): React.ReactNode {
     }
   }
 
-  // Normal mode - show point changes
-  if (detail.includes("points")) {
-    if (detail.includes("Gained") || detail.includes("Won")) {
-      return <span className="text-success">{detail}</span>;
-    } else if (detail.includes("Lost")) {
-      return <span className="text-danger">{detail}</span>;
-    }
-  }
-
-  // Spin Again
-  if (detail.includes("Spin Again")) {
-    return <span className="text-accent">{detail}</span>;
-  }
-
   // Default: return as-is with muted color
   return <span className="text-text-muted">{detail}</span>;
 }
 
 export default function Home() {
-  // Initialize with fixed defaults to avoid hydration mismatch
-  const [mode, setMode] = useState<GameMode>("normal");
   const [phase, setPhase] = useState<GamePhase>("setup");
   const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0);
@@ -140,28 +112,22 @@ export default function Home() {
   const [round, setRound] = useState(1);
   const [autoSpinEnabled, setAutoSpinEnabled] = useState(true);
   const [finalRankings, setFinalRankings] = useState<BattleRoyaleRanking[]>([]);
-  const [targetPoints, setTargetPoints] = useState(500);
   const [riggedEnabled, setRiggedEnabled] = useState(false);
   const autoSpinTimerRef = useRef<NodeJS.Timeout | null>(null);
   const wheelRef = useRef<WheelRef>(null);
 
-  const segments = mode === "normal" ? NORMAL_SEGMENTS : BATTLE_SEGMENTS;
+  const segments = BATTLE_SEGMENTS;
   const activePlayers = players.filter((p) => p.status === "active");
 
   // Load preferences from localStorage after mount (client-side only)
   useEffect(() => {
     try {
-      const savedMode = localStorage.getItem("wheeloffortune_game_mode");
       const savedAutoSpin = localStorage.getItem("wheeloffortune_auto_spin");
-
-      startTransition(() => {
-        if (savedMode === "normal" || savedMode === "battle-royale") {
-          setMode(savedMode);
-        }
-        if (savedAutoSpin !== null) {
+      if (savedAutoSpin !== null) {
+        startTransition(() => {
           setAutoSpinEnabled(savedAutoSpin === "true");
-        }
-      });
+        });
+      }
     } catch (error) {
       console.error("Failed to load preferences:", error);
     }
@@ -188,10 +154,10 @@ export default function Home() {
 
   const addPlayer = useCallback(
     (name: string) => {
-      if (mode === "battle-royale" && players.length >= 64) return;
+      if (players.length >= 64) return;
       setPlayers((prev) => [...prev, createPlayer(name)]);
     },
-    [mode, players.length],
+    [players.length],
   );
 
   const removePlayer = useCallback((id: string) => {
@@ -199,15 +165,14 @@ export default function Home() {
   }, []);
 
   const startGame = useCallback(() => {
-    if (mode === "normal" && players.length === 0) return;
-    if (mode === "battle-royale" && players.length < 2) return;
+    if (players.length < 2) return;
     setPhase("playing");
     setCurrentPlayerIndex(0);
     setResults([]);
     setLastResult(null);
     setRound(1);
     setPlayers((prev) => prev.map((p) => ({ ...p, status: "active" as const, score: 0 })));
-  }, [mode, players.length]);
+  }, [players.length]);
 
   const resetGame = useCallback(() => {
     // Cancel any in-progress spin
@@ -242,108 +207,6 @@ export default function Home() {
       return idx;
     },
     [],
-  );
-
-  const handleNormalResult = useCallback(
-    (segment: WheelSegment) => {
-      const currentPlayer = activePlayers[currentPlayerIndex % activePlayers.length];
-      if (!currentPlayer) return;
-
-      let detail = "";
-      let scoreChange = 0;
-
-      switch (segment.label) {
-        case "Lucky! +100":
-          scoreChange = 100;
-          detail = `${currentPlayer.name} got lucky! +100 points!`;
-          break;
-        case "Unlucky -50":
-          scoreChange = -50;
-          detail = `${currentPlayer.name} was unlucky. -50 points.`;
-          break;
-        case "Spin Again":
-          detail = `${currentPlayer.name} gets to spin again!`;
-          break;
-        case "Double Pts":
-          scoreChange = currentPlayer.score;
-          detail = `${currentPlayer.name} doubled their points! +${currentPlayer.score} points!`;
-          break;
-        case "Lose Turn":
-          detail = `${currentPlayer.name} lost their turn.`;
-          break;
-        case "Bonus Round":
-          scoreChange = 75;
-          detail = `${currentPlayer.name} hit the bonus! +75 points!`;
-          break;
-        case "+50 Points":
-          scoreChange = 50;
-          detail = `${currentPlayer.name} earned +50 points!`;
-          break;
-        case "-25 Points":
-          scoreChange = -25;
-          detail = `${currentPlayer.name} lost 25 points.`;
-          break;
-      }
-
-      // Calculate new score
-      const newScore = currentPlayer.score + scoreChange;
-
-      // Update player scores
-      const updatedPlayers = players.map((p) =>
-        p.id === currentPlayer.id ? { ...p, score: newScore } : p
-      );
-      setPlayers(updatedPlayers);
-
-      const result: GameResult = {
-        playerName: currentPlayer.name,
-        segment: segment.label,
-        detail,
-      };
-      setLastResult(result);
-      setResults((prev) => [result, ...prev].slice(0, 20));
-
-      // Check if player reached target
-      let gameEnded = false;
-      if (newScore >= targetPoints) {
-        gameEnded = true;
-
-        // Mark player as winner
-        const playersWithWinner = updatedPlayers.map((p) =>
-          p.id === currentPlayer.id ? { ...p, status: "winner" as const } : p
-        );
-        setPlayers(playersWithWinner);
-
-        // Show victory message
-        setLastResult({
-          playerName: currentPlayer.name,
-          segment: "WINNER!",
-          detail: `${currentPlayer.name} reached ${targetPoints} points and wins the game!`,
-        });
-
-        // Transition to finished phase
-        setPhase("finished");
-      } else {
-        // Move to next player unless "Spin Again"
-        if (segment.label !== "Spin Again") {
-          const playerIdx = players.findIndex((p) => p.id === currentPlayer.id);
-          const nextIdx = getNextActivePlayerIndex(playerIdx, updatedPlayers);
-          setCurrentPlayerIndex(nextIdx);
-        }
-      }
-
-      setSpinning(false);
-
-      // Trigger autospin after result is displayed (only if game not ended)
-      if (autoSpinEnabled && phase === "playing" && !gameEnded) {
-        if (autoSpinTimerRef.current) {
-          clearTimeout(autoSpinTimerRef.current);
-        }
-        autoSpinTimerRef.current = setTimeout(() => {
-          wheelRef.current?.spin();
-        }, 2000);
-      }
-    },
-    [activePlayers, currentPlayerIndex, players, getNextActivePlayerIndex, autoSpinEnabled, phase, targetPoints],
   );
 
   const calculateRankings = useCallback((playerList: Player[], totalRounds: number): BattleRoyaleRanking[] => {
@@ -498,7 +361,7 @@ export default function Home() {
       // Check for winner
       const remaining = updatedPlayers.filter((p) => p.status === "active");
       let gameEnded = false;
-      if (remaining.length <= 1 && mode === "battle-royale") {
+      if (remaining.length <= 1) {
         gameEnded = true;
         if (remaining.length === 1) {
           const winnerIdx = updatedPlayers.findIndex((p) => p.id === remaining[0].id);
@@ -544,19 +407,10 @@ export default function Home() {
         }, 2000);
       }
     },
-    [players, currentPlayerIndex, mode, getNextActivePlayerIndex, autoSpinEnabled, round, calculateRankings],
+    [players, currentPlayerIndex, getNextActivePlayerIndex, autoSpinEnabled, round, calculateRankings],
   );
 
-  const handleResult = useCallback(
-    (segment: WheelSegment) => {
-      if (mode === "normal") {
-        handleNormalResult(segment);
-      } else {
-        handleBattleResult(segment);
-      }
-    },
-    [mode, handleNormalResult, handleBattleResult],
-  );
+  const handleResult = handleBattleResult;
 
   const handleSpinStart = useCallback(() => {
     setSpinning(true);
@@ -580,23 +434,11 @@ export default function Home() {
       {(phase === "setup" || phase === "finished") && (
         <GameSplash
           phase={phase}
-          mode={mode}
           players={players}
-          targetPoints={targetPoints}
           totalRounds={round}
           finalRankings={finalRankings}
-          onModeChange={(newMode) => {
-            setMode(newMode);
-            setPlayers([]);
-            try {
-              localStorage.setItem("wheeloffortune_game_mode", newMode);
-            } catch (error) {
-              console.error("Failed to save game mode preference:", error);
-            }
-          }}
           onAddPlayer={addPlayer}
           onRemovePlayer={removePlayer}
-          onTargetPointsChange={setTargetPoints}
           onStartGame={startGame}
           onPlayAgain={() => {
             setPhase("playing");
@@ -629,18 +471,6 @@ export default function Home() {
             setRound(1);
             setFinalRankings([]);
             setPlayers([]);
-            try {
-              const savedMode = localStorage.getItem("wheeloffortune_game_mode");
-              if (savedMode === "normal" || savedMode === "battle-royale") {
-                setMode(savedMode);
-              } else {
-                setMode("normal");
-              }
-            } catch (error) {
-              console.error("Failed to load game mode preference:", error);
-              setMode("normal");
-            }
-            setTargetPoints(500);
           }}
         />
       )}
@@ -685,7 +515,7 @@ export default function Home() {
                 onAddPlayer={addPlayer}
                 onRemovePlayer={removePlayer}
                 gameActive={true}
-                mode={mode}
+                mode="battle-royale"
               />
 
               {/* Game Controls */}
@@ -710,15 +540,9 @@ export default function Home() {
             <div className={styles.currentPlayerBanner}>
               <span className={styles.currentPlayerLabel}>Current Player</span>
               <p className={styles.currentPlayerName}>{currentPlayerName}</p>
-              {mode === "battle-royale" ? (
-                <span className={styles.currentPlayerStatus}>
-                  Round {round} &middot; {activePlayers.length} remaining
-                </span>
-              ) : (
-                <span className={styles.currentPlayerStatus}>
-                  Target: {targetPoints} points
-                </span>
-              )}
+              <span className={styles.currentPlayerStatus}>
+                Round {round} &middot; {activePlayers.length} remaining
+              </span>
             </div>
           )}
 
@@ -788,35 +612,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Normal Mode Scoreboard */}
-          {mode === "normal" && players.length > 0 && phase !== "setup" && (
-            <div className={styles.scoreboardPanel}>
-              <h2 className={styles.panelTitle}>Scoreboard</h2>
-              <div className={styles.scoreList}>
-                {[...players]
-                  .sort((a, b) => b.score - a.score)
-                  .map((p) => (
-                    <div
-                      key={p.id}
-                      className={styles.scoreItem}
-                    >
-                      <span className={styles.scoreName}>{p.name}</span>
-                      <span
-                        className={
-                          p.score > 0
-                            ? styles.scorePositive
-                            : p.score < 0
-                              ? styles.scoreNegative
-                              : styles.scoreNeutral
-                        }
-                      >
-                        {p.score}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </main>
