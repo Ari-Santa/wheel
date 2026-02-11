@@ -130,7 +130,7 @@ export default function GameSplash({
   // Dynamic subtitle based on phase
   const renderSubtitle = () => {
     if (phase === "setup") {
-      return "Choose your mode and add players to begin";
+      return "Add players and start the Battle Royale";
     }
     return `${players.length} players competed over ${totalRounds} rounds`;
   };
