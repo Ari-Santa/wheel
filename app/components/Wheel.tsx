@@ -48,7 +48,6 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
 }, ref) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const currentRotationRef = useRef(0);
-  const [displayRotation, setDisplayRotation] = useState(0);
   const wheelRef = useRef<HTMLDivElement>(null);
   const pointerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -260,13 +259,19 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
     }
 
     currentRotationRef.current = newRotation;
-    setDisplayRotation(newRotation);
   }, [disabled, spinning, onSpinStart, onResult, segments, segmentAngle, riggedEnabled, currentPlayerName, riggedPlayerName]);
 
   const cancelSpin = useCallback(() => {
     if (tweenRef.current) {
       tweenRef.current.kill();
       tweenRef.current = null;
+    }
+  }, []);
+
+  // Sync GSAP rotation when wheel ref is available
+  useEffect(() => {
+    if (wheelRef.current && currentRotationRef.current !== 0) {
+      gsap.set(wheelRef.current, { rotation: currentRotationRef.current });
     }
   }, []);
 
@@ -294,7 +299,6 @@ const Wheel = forwardRef<WheelRef, WheelProps>(function Wheel({
           style={{
             width: size,
             height: size,
-            transform: `rotate(${displayRotation}deg)`,
           }}
         >
           <canvas
