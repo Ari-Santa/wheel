@@ -38,7 +38,6 @@ export default function GameSplash({
 
   const canStart = players.length >= 2;
 
-
   // Fetch FC members from API on mount
   useEffect(() => {
     const fetchFCMembers = async () => {
@@ -172,113 +171,117 @@ export default function GameSplash({
                 </button>
               </div>
 
-              {/* FC Members */}
-              {(loadingPresets || presetPlayers.length > 0) && (
-                <div className={styles.fcSection}>
-                  <div className={styles.sectionHeader}>
-                    <label className={styles.sectionLabel}>
-                      {loadingPresets ? "Loading FC Members..." : `FC Members (${presetPlayers.length})`}
-                    </label>
-                    {!loadingPresets && presetPlayers.length > 0 && (
-                      <button
-                        onClick={() => {
-                          const playerNames = players.map((p) => p.name);
-                          for (const name of presetPlayers) {
-                            if (!playerNames.includes(name)) {
-                              onAddPlayer(name);
-                              playerNames.push(name);
-                            }
-                          }
-                        }}
-                        className={styles.addAllButton}
-                      >
-                        Add All
-                      </button>
-                    )}
-                  </div>
-                  {loadingPresets ? (
-                    <div className={styles.loadingSpinner}>
-                      <div className={styles.spinner}></div>
-                    </div>
-                  ) : (
-                    <div className={styles.tagContainer}>
-                      {presetPlayers.map((name) => (
+              {/* FC Members & Saved Players (top half) */}
+              <div className={styles.fcSectionsWrapper}>
+                {(loadingPresets || presetPlayers.length > 0) && (
+                  <div className={styles.fcSection}>
+                    <div className={styles.sectionHeader}>
+                      <label className={styles.sectionLabel}>
+                        {loadingPresets ? "Loading FC Members..." : `FC Members (${presetPlayers.length})`}
+                      </label>
+                      {!loadingPresets && presetPlayers.length > 0 && (
                         <button
-                          key={name}
                           onClick={() => {
-                            if (!players.some((p) => p.name === name)) {
-                              onAddPlayer(name);
+                            const playerNames = players.map((p) => p.name);
+                            for (const name of presetPlayers) {
+                              if (!playerNames.includes(name)) {
+                                onAddPlayer(name);
+                                playerNames.push(name);
+                              }
                             }
                           }}
-                          disabled={players.some((p) => p.name === name)}
-                          className={players.some((p) => p.name === name) ? styles.fcTagDisabled : styles.fcTag}
+                          className={styles.addAllButton}
                         >
-                          {name}
+                          Add All
                         </button>
+                      )}
+                    </div>
+                    {loadingPresets ? (
+                      <div className={styles.loadingSpinner}>
+                        <div className={styles.spinner}></div>
+                      </div>
+                    ) : (
+                      <div className={styles.tagContainer}>
+                        {presetPlayers.map((name) => (
+                          <button
+                            key={name}
+                            onClick={() => {
+                              if (!players.some((p) => p.name === name)) {
+                                onAddPlayer(name);
+                              }
+                            }}
+                            disabled={players.some((p) => p.name === name)}
+                            className={players.some((p) => p.name === name) ? styles.fcTagDisabled : styles.fcTag}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {savedPlayers.length > 0 && (
+                  <div className={styles.fcSection}>
+                    <div className={styles.sectionHeader}>
+                      <label className={styles.sectionLabel}>Recently Used ({savedPlayers.length})</label>
+                      <button onClick={clearAllSaved} className={styles.clearButton}>
+                        Clear All
+                      </button>
+                    </div>
+                    <div className={styles.tagContainer}>
+                      {savedPlayers.map((name) => (
+                        <div key={name} className={styles.savedTag}>
+                          <button onClick={() => addSavedPlayerToGame(name)} className={styles.savedTagName}>
+                            {name}
+                          </button>
+                          <button onClick={() => removeFromSaved(name)} className={styles.savedTagRemove}>
+                            ✕
+                          </button>
+                        </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
+              </div>
 
-              {/* Saved Players */}
-              {savedPlayers.length > 0 && (
-                <div className={styles.fcSection}>
-                  <div className={styles.sectionHeader}>
-                    <label className={styles.sectionLabel}>Recently Used ({savedPlayers.length})</label>
-                    <button onClick={clearAllSaved} className={styles.clearButton}>
-                      Clear All
+              {/* Added Players (bottom half) */}
+              <div className={styles.playerListSection}>
+                {players.length < 2 && (
+                  <p className={styles.helperText}>Add at least 2 players to start (max 64)</p>
+                )}
+
+                {players.length > 0 && (
+                  <div className={styles.playerListHeader}>
+                    <label className={styles.playerListLabel}>Players ({players.length})</label>
+                    <button
+                      onClick={() => players.forEach((player) => onRemovePlayer(player.id))}
+                      className={styles.clearPlayersButton}
+                    >
+                      Clear
                     </button>
                   </div>
-                  <div className={styles.tagContainer}>
-                    {savedPlayers.map((name) => (
-                      <div key={name} className={styles.savedTag}>
-                        <button onClick={() => addSavedPlayerToGame(name)} className={styles.savedTagName}>
-                          {name}
-                        </button>
-                        <button onClick={() => removeFromSaved(name)} className={styles.savedTagRemove}>
-                          ✕
+                )}
+
+                {players.length > 0 ? (
+                  <div className={styles.playerGrid}>
+                    {players.map((player) => (
+                      <div key={player.id} className={styles.playerChip}>
+                        <span className={styles.playerName}>{player.name}</span>
+                        <button
+                          onClick={() => onRemovePlayer(player.id)}
+                          className={styles.removePlayerButton}
+                          aria-label={`Remove ${player.name}`}
+                        >
+                          ×
                         </button>
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
-
-              {players.length < 2 && (
-                <p className={styles.helperText}>Add at least 2 players to start (max 64)</p>
-              )}
-
-              {players.length > 0 && (
-                <div className={styles.playerListHeader}>
-                  <label className={styles.playerListLabel}>Players ({players.length})</label>
-                  <button
-                    onClick={() => players.forEach((player) => onRemovePlayer(player.id))}
-                    className={styles.clearPlayersButton}
-                  >
-                    Clear
-                  </button>
-                </div>
-              )}
-
-              {players.length > 0 ? (
-                <div className={styles.playerGrid}>
-                  {players.map((player) => (
-                    <div key={player.id} className={styles.playerChip}>
-                      <span className={styles.playerName}>{player.name}</span>
-                      <button
-                        onClick={() => onRemovePlayer(player.id)}
-                        className={styles.removePlayerButton}
-                        aria-label={`Remove ${player.name}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className={styles.emptyMessage}>No players added yet</p>
-              )}
+                ) : (
+                  <p className={styles.emptyMessage}>No players added yet</p>
+                )}
+              </div>
             </div>
 
             {/* Start Button */}
